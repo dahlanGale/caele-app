@@ -1,12 +1,12 @@
 import {
-    addDoc,
-    collection,
-    doc,
-    getDoc,
-    getDocs,
-    query,
-    setDoc,
-    where
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  setDoc,
+  where
 } from 'firebase/firestore';
 import { firestore } from '../app/config/firebase';
   
@@ -58,7 +58,6 @@ import { firestore } from '../app/config/firebase';
         throw error; // Manejo de errores
       }
     }  
-  
   
     // Método para listar usuarios por id
     async listarUsuarioPorId(id: string) {
