@@ -84,7 +84,7 @@ export default function TableProductos() {
               <View style={[styles.cell, { width: 44 }]}> 
                 <MaterialCommunityIcons name="checkbox-blank-outline" color={colors.text} size={20} />
               </View>
-              <View style={[styles.cell, { flex: 3 }]}>
+              <View style={[styles.cell, { flex: 3, alignItems: 'flex-start' }]}>
                 <Text numberOfLines={1} style={[styles.headerText, { color: colors.text }]}>Producto</Text>
               </View>
               <View style={[styles.cell, { flex: 2 }]}>
@@ -114,7 +114,7 @@ export default function TableProductos() {
                         size={20}
                       />
                     </Pressable>
-                    <View style={[styles.cell, { flex: 3, flexDirection: 'row', alignItems: 'center' }]}> 
+                    <View style={[styles.cell, { flex: 3, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' }]}> 
                       <Image source={{ uri: item.imagen }} style={styles.thumb} contentFit="cover" />
                       <View style={{ marginLeft: 10 }}>
                         <Text numberOfLines={1} style={{ color: colors.text, fontWeight: '700' }}>{item.nombre}</Text>

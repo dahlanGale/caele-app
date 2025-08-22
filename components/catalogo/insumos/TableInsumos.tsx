@@ -45,95 +45,97 @@ export default function TableInsumos() {
 
   return (
     <View style={{ flex: 1 }}>
-      {/* Toolbar centrada y alineada con el ancho de la tabla */}
-      <View style={{ width: '100%', alignItems: 'center' }}>
-        <View style={[styles.toolbar, { width: '100%', maxWidth: MIN_TABLE_W }]}>
-          <View style={[styles.search, { backgroundColor: colors.card, borderColor: dark ? 'rgba(255,255,255,0.08)' : '#E5E7EB' }]}>
-            <MaterialCommunityIcons name="magnify" color={colors.text} size={18} style={{ opacity: 0.7 }} />
-            <TextInput
-              placeholder="Buscar insumo"
-              placeholderTextColor={dark ? '#94A3B8' : '#94A3B8'}
-              value={query}
-              onChangeText={setQuery}
-              style={{ flex: 1, color: colors.text }}
+      <View style={{ width: '100%', maxWidth: (isWeb || isWide) ? CONTENT_MAX_W : undefined, alignSelf: (isWeb || isWide) ? 'center' : 'stretch' }}>
+        {/* Toolbar centrada y alineada con el ancho de la tabla */}
+        <View style={{ width: '100%', alignItems: 'center' }}>
+          <View style={[styles.toolbar, { width: '100%', maxWidth: MIN_TABLE_W }]}>
+            <View style={[styles.search, { backgroundColor: colors.card, borderColor: dark ? 'rgba(255,255,255,0.08)' : '#E5E7EB' }]}>
+              <MaterialCommunityIcons name="magnify" color={colors.text} size={18} style={{ opacity: 0.7 }} />
+              <TextInput
+                placeholder="Buscar insumo"
+                placeholderTextColor={dark ? '#94A3B8' : '#94A3B8'}
+                value={query}
+                onChangeText={setQuery}
+                style={{ flex: 1, color: colors.text }}
+              />
+            </View>
+            <Pressable onPress={() => Alert.alert('Filtros', 'Filtros de insumos próximamente')} style={[styles.btn, { borderColor: dark ? 'rgba(255,255,255,0.08)' : '#E5E7EB' }]}>
+              <MaterialCommunityIcons name="tune" color={colors.text} size={18} />
+              <Text style={{ color: colors.text, fontWeight: '700', marginLeft: 6 }}>Filtros</Text>
+            </Pressable>
+            <Pressable onPress={() => Alert.alert('Nuevo insumo', 'Acción crear insumo')} style={[styles.btnPrimary]}>
+              <MaterialCommunityIcons name="plus" color="#fff" size={18} />
+              <Text style={{ color: '#fff', fontWeight: '800', marginLeft: 6 }}>Nuevo insumo</Text>
+            </Pressable>
+          </View>
+        </View>
+
+        {/* Tabla con scroll horizontal centrada en web */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={{ width: '100%'  }}
+          contentContainerStyle={{ paddingLeft: (isWeb || isWide) ? sidePad : 0, paddingRight: (isWeb || isWide) ? sidePad : 0 }}
+        >
+          <View style={{ minWidth: MIN_TABLE_W, flex: 1 }}>
+            {/* Header */}
+            <View style={[styles.row, styles.header, { backgroundColor: dark ? 'rgba(255,255,255,0.03)' : '#F8FAFC', borderColor: dark ? 'rgba(255,255,255,0.08)' : '#E5E7EB' }]}>
+              <View style={[styles.cell, { width: 44 }]}>
+                <MaterialCommunityIcons name="checkbox-blank-outline" color={colors.text} size={20} />
+              </View>
+              <View style={[styles.cell, { flex: 3 }]}>
+                <Text numberOfLines={1} style={[styles.headerText, { color: colors.text }]}>Insumo</Text>
+              </View>
+              <View style={[styles.cell, { flex: 1 }]}>
+                <Text numberOfLines={1} style={[styles.headerText, { color: colors.text }]}>Unidad</Text>
+              </View>
+              <View style={[styles.cell, { flex: 1 }]}>
+                <Text numberOfLines={1} style={[styles.headerText, { color: colors.text }]}>Stock</Text>
+              </View>
+              <View style={[styles.cell, { flex: 1 }]}>
+                <Text numberOfLines={1} style={[styles.headerText, { color: colors.text }]}>Costo</Text>
+              </View>
+              <View style={[styles.cell, { width: 44 }]} />
+            </View>
+
+            <FlatList
+              data={items}
+              keyExtractor={(it) => it.id}
+              renderItem={({ item }) => {
+                const checked = !!selected[item.id];
+                return (
+                  <View style={[styles.row, { borderColor: dark ? 'rgba(255,255,255,0.08)' : '#E5E7EB' }]}>
+                    <Pressable onPress={() => toggleSelect(item.id)} style={[styles.cell, { width: 44, alignItems: 'center' }]}>
+                      <MaterialCommunityIcons
+                        name={checked ? 'checkbox-marked' : 'checkbox-blank-outline'}
+                        color={checked ? '#2563EB' : colors.text}
+                        size={20}
+                      />
+                    </Pressable>
+                    <View style={[styles.cell, { flex: 3 }]}>
+                      <Text numberOfLines={1} style={{ color: colors.text, fontWeight: '700' }}>{item.nombre}</Text>
+                    </View>
+                    <View style={[styles.cell, { flex: 1 }]}>
+                      <Text style={{ color: colors.text, opacity: 0.9 }}>{item.unidad}</Text>
+                    </View>
+                    <View style={[styles.cell, { flex: 1 }]}>
+                      <Text style={{ color: colors.text }}>{item.stock}</Text>
+                    </View>
+                    <View style={[styles.cell, { flex: 1 }]}>
+                      <Text style={{ color: colors.text, fontWeight: '700' }}>{money(item.costo)}</Text>
+                    </View>
+                    <Pressable onPress={() => Alert.alert('Acciones', `Acciones para ${item.nombre}`)} style={[styles.cell, { width: 44, alignItems: 'center' }]}>
+                      <MaterialCommunityIcons name="dots-vertical" color={colors.text} size={20} />
+                    </Pressable>
+                  </View>
+                );
+              }}
+              ItemSeparatorComponent={() => <View style={{ height: 1, backgroundColor: dark ? 'rgba(255,255,255,0.08)' : '#E5E7EB' }} />}
+              contentContainerStyle={{ borderWidth: 1, borderColor: dark ? 'rgba(255,255,255,0.08)' : '#E5E7EB', borderRadius: 12, overflow: 'hidden' }}
             />
           </View>
-          <Pressable onPress={() => Alert.alert('Filtros', 'Filtros de insumos próximamente')} style={[styles.btn, { borderColor: dark ? 'rgba(255,255,255,0.08)' : '#E5E7EB' }]}>
-            <MaterialCommunityIcons name="tune" color={colors.text} size={18} />
-            <Text style={{ color: colors.text, fontWeight: '700', marginLeft: 6 }}>Filtros</Text>
-          </Pressable>
-          <Pressable onPress={() => Alert.alert('Nuevo insumo', 'Acción crear insumo')} style={[styles.btnPrimary]}>
-            <MaterialCommunityIcons name="plus" color="#fff" size={18} />
-            <Text style={{ color: '#fff', fontWeight: '800', marginLeft: 6 }}>Nuevo insumo</Text>
-          </Pressable>
-        </View>
+        </ScrollView>
       </View>
-
-      {/* Tabla con scroll horizontal centrada en web */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={{ flex: 1 }}
-        contentContainerStyle={{ paddingLeft: (isWeb || isWide) ? sidePad : 0, paddingRight: (isWeb || isWide) ? sidePad : 0 }}
-      >
-        <View style={{ minWidth: MIN_TABLE_W, flex: 1 }}>
-          {/* Header */}
-          <View style={[styles.row, styles.header, { backgroundColor: dark ? 'rgba(255,255,255,0.03)' : '#F8FAFC', borderColor: dark ? 'rgba(255,255,255,0.08)' : '#E5E7EB' }]}>
-            <View style={[styles.cell, { width: 44 }]}>
-              <MaterialCommunityIcons name="checkbox-blank-outline" color={colors.text} size={20} />
-            </View>
-            <View style={[styles.cell, { flex: 3 }]}>
-              <Text numberOfLines={1} style={[styles.headerText, { color: colors.text }]}>Insumo</Text>
-            </View>
-            <View style={[styles.cell, { flex: 1 }]}>
-              <Text numberOfLines={1} style={[styles.headerText, { color: colors.text }]}>Unidad</Text>
-            </View>
-            <View style={[styles.cell, { flex: 1 }]}>
-              <Text numberOfLines={1} style={[styles.headerText, { color: colors.text }]}>Stock</Text>
-            </View>
-            <View style={[styles.cell, { flex: 1 }]}>
-              <Text numberOfLines={1} style={[styles.headerText, { color: colors.text }]}>Costo</Text>
-            </View>
-            <View style={[styles.cell, { width: 44 }]} />
-          </View>
-
-          <FlatList
-            data={items}
-            keyExtractor={(it) => it.id}
-            renderItem={({ item }) => {
-              const checked = !!selected[item.id];
-              return (
-                <View style={[styles.row, { borderColor: dark ? 'rgba(255,255,255,0.08)' : '#E5E7EB' }]}>
-                  <Pressable onPress={() => toggleSelect(item.id)} style={[styles.cell, { width: 44, alignItems: 'center' }]}>
-                    <MaterialCommunityIcons
-                      name={checked ? 'checkbox-marked' : 'checkbox-blank-outline'}
-                      color={checked ? '#2563EB' : colors.text}
-                      size={20}
-                    />
-                  </Pressable>
-                  <View style={[styles.cell, { flex: 3 }]}>
-                    <Text numberOfLines={1} style={{ color: colors.text, fontWeight: '700' }}>{item.nombre}</Text>
-                  </View>
-                  <View style={[styles.cell, { flex: 1 }]}>
-                    <Text style={{ color: colors.text, opacity: 0.9 }}>{item.unidad}</Text>
-                  </View>
-                  <View style={[styles.cell, { flex: 1 }]}>
-                    <Text style={{ color: colors.text }}>{item.stock}</Text>
-                  </View>
-                  <View style={[styles.cell, { flex: 1 }]}>
-                    <Text style={{ color: colors.text, fontWeight: '700' }}>{money(item.costo)}</Text>
-                  </View>
-                  <Pressable onPress={() => Alert.alert('Acciones', `Acciones para ${item.nombre}`)} style={[styles.cell, { width: 44, alignItems: 'center' }]}>
-                    <MaterialCommunityIcons name="dots-vertical" color={colors.text} size={20} />
-                  </Pressable>
-                </View>
-              );
-            }}
-            ItemSeparatorComponent={() => <View style={{ height: 1, backgroundColor: dark ? 'rgba(255,255,255,0.08)' : '#E5E7EB' }} />}
-            contentContainerStyle={{ borderWidth: 1, borderColor: dark ? 'rgba(255,255,255,0.08)' : '#E5E7EB', borderRadius: 12, overflow: 'hidden' }}
-          />
-        </View>
-      </ScrollView>
     </View>
   );
 }
