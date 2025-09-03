@@ -4,8 +4,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { GoogleAuthProvider, signInWithCredential, signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
-import React, { useState } from 'react';
-import { Image, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { Image, Platform, Pressable, StyleSheet, Text, TextInput, View, useColorScheme } from 'react-native';
 import { auth, googleProvider } from '../config/firebase';
 
 // Completar la sesión del navegador (requerido por AuthSession)
@@ -27,6 +27,12 @@ export default function LoginScreen() {
     responseType: 'id_token',
     scopes: ['openid', 'profile', 'email'],
   });
+
+  // Theme
+  const colorScheme = useColorScheme();
+  const dark = colorScheme === 'dark';
+  const styles = useMemo(() => createStyles(dark), [dark]);
+  const placeholderColor = dark ? '#9CA3AF' : '#9CA3AF';
 
   const onLogin = async () => {
     setError(null);
@@ -70,7 +76,7 @@ export default function LoginScreen() {
   return (
     <View style={styles.root}>
       <LinearGradient
-        colors={["#CDDDEF", "#FFFFFF"]}
+        colors={dark ? ["#0B1220", "#111827"] : ["#CDDDEF", "#FFFFFF"]}
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 1 }}
         style={styles.gradient}
@@ -89,9 +95,10 @@ export default function LoginScreen() {
 
             <View style={styles.form}>
               <View style={styles.inputRow}>
-                <MaterialCommunityIcons name="email-outline" size={20} color="#6B7280" style={styles.icon} />
+                <MaterialCommunityIcons name="email-outline" size={20} style={styles.icon} />
                 <TextInput
                   placeholder="Correo electrónico"
+                  placeholderTextColor={placeholderColor}
                   autoCapitalize="none"
                   keyboardType="email-address"
                   value={email}
@@ -100,9 +107,10 @@ export default function LoginScreen() {
                 />
               </View>
               <View style={styles.inputRow}>
-                <MaterialCommunityIcons name="lock-outline" size={20} color="#6B7280" style={styles.icon} />
+                <MaterialCommunityIcons name="lock-outline" size={20} style={styles.icon} />
                 <TextInput
                   placeholder="Contraseña"
+                  placeholderTextColor={placeholderColor}
                   secureTextEntry
                   value={password}
                   onChangeText={setPassword}
@@ -145,8 +153,8 @@ export default function LoginScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#fff' },
+const createStyles = (dark: boolean) => StyleSheet.create({
+  root: { flex: 1, backgroundColor: dark ? '#0B1220' : '#fff' },
   gradient: { flex: 1 },
   center: {
     flex: 1,
@@ -157,11 +165,11 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 420,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: dark ? '#111827' : '#FFFFFF',
     borderRadius: 16,
     padding: 20,
     shadowColor: '#000',
-    shadowOpacity: 0.12,
+    shadowOpacity: dark ? 0.25 : 0.12,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 6 },
     elevation: 6,
@@ -178,11 +186,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#111827',
+    color: dark ? '#F9FAFB' : '#111827',
   },
   subtitle: {
     fontSize: 14,
-    color: '#6B7280',
+    color: dark ? '#9CA3AF' : '#6B7280',
     marginTop: 4,
   },
   form: { gap: 12 },
@@ -190,16 +198,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: dark ? '#374151' : '#E5E7EB',
     borderRadius: 12,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: dark ? '#0F172A' : '#F9FAFB',
     paddingHorizontal: 12,
   },
-  icon: { marginRight: 6 },
+  icon: { marginRight: 6, color: dark ? '#9CA3AF' : '#6B7280' },
   inputControl: {
     flex: 1,
     paddingVertical: 12,
     fontSize: 16,
+    color: dark ? '#F3F4F6' : '#111827',
   },
   forgotRow: { alignItems: 'flex-end' },
   error: {
@@ -219,14 +228,14 @@ const styles = StyleSheet.create({
   },
   outlineBtn: {
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: dark ? '#374151' : '#D1D5DB',
     paddingVertical: 14,
     borderRadius: 14,
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: dark ? '#111827' : '#fff',
   },
   outlineBtnText: {
-    color: '#111827',
+    color: dark ? '#F3F4F6' : '#111827',
     fontSize: 16,
     fontWeight: '600',
   },
@@ -245,19 +254,19 @@ const styles = StyleSheet.create({
   separator: {
     flex: 1,
     height: 1,
-    backgroundColor: '#E5E7EB',
+    backgroundColor: dark ? '#1F2937' : '#E5E7EB',
   },
   sepText: {
-    color: '#9CA3AF',
+    color: dark ? '#9CA3AF' : '#9CA3AF',
   },
   helperText: {
     marginTop: 8,
-    color: '#6B7280',
+    color: dark ? '#9CA3AF' : '#6B7280',
     fontSize: 12,
     textAlign: 'center',
   },
   link: {
-    color: '#2563EB',
+    color: dark ? '#60A5FA' : '#2563EB',
     fontSize: 13,
     fontWeight: '600',
   },
