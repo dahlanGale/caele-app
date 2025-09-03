@@ -1,7 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '@react-navigation/native';
 import { Image } from 'expo-image';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
 
 export default function OrdenScreen() {
@@ -93,6 +93,15 @@ export default function OrdenScreen() {
       image: 'https://images.unsplash.com/photo-1542831371-29b0f74f9713?q=80&w=1200&auto=format&fit=crop',
     },
   ];
+
+  // Asegura que la categoría inicial tenga productos (se ejecuta después del primer render)
+  useEffect(() => {
+    const firstWithItems = CATEGORIES.find((c) => PRODUCTS.some((p) => p.category === c));
+    if (firstWithItems && firstWithItems !== category) {
+      setCategory(firstWithItems);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Cart state
   type CartState = Record<string, { qty: number; product: Product }>; // by product id
@@ -201,31 +210,37 @@ export default function OrdenScreen() {
           {/* Product grid */}
           <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -8 }}>
-              {filtered.map((p) => (
-                <View key={p.id} style={{ width: `${100 / gridCols}%`, paddingHorizontal: 8, marginBottom: 16 }}>
-                  <View style={[styles.card, { backgroundColor: colors.card, borderColor: dark ? 'rgba(255,255,255,0.08)' : '#E5E7EB' }]}>
-                    <Image
-                      source={{ uri: p.image }}
-                      style={{ width: '100%', height: 140, borderRadius: 8 }}
-                      contentFit="cover"
-                    />
-                    <View style={{ marginTop: 10 }}>
-                      <Text numberOfLines={2} style={[styles.cardTitle, { color: colors.text }]}>{p.title}</Text>
-                      <Text numberOfLines={2} style={{ color: colors.text, opacity: 0.7, marginTop: 4 }}>{p.description}</Text>
-                    </View>
-
-                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
-                      <View>
-                        <Text style={[styles.price, { color: '#F97316' }]}>{money(p.price)}</Text>
-                        <Text style={{ color: colors.text, opacity: 0.6, fontSize: 12 }}>{p.pack}</Text>
+              {filtered.length === 0 ? (
+                <Text style={{ color: colors.text, opacity: 0.7, paddingHorizontal: 8 }}>
+                  No hay productos en esta categoría
+                </Text>
+              ) : (
+                filtered.map((p) => (
+                  <View key={p.id} style={{ width: `${100 / gridCols}%`, paddingHorizontal: 8, marginBottom: 16 }}>
+                    <View style={[styles.card, { backgroundColor: colors.card, borderColor: dark ? 'rgba(255,255,255,0.08)' : '#E5E7EB' }]}>
+                      <Image
+                        source={{ uri: p.image }}
+                        style={{ width: '100%', height: 140, borderRadius: 8 }}
+                        contentFit="cover"
+                      />
+                      <View style={{ marginTop: 10 }}>
+                        <Text numberOfLines={2} style={[styles.cardTitle, { color: colors.text }]}>{p.title}</Text>
+                        <Text numberOfLines={2} style={{ color: colors.text, opacity: 0.7, marginTop: 4 }}>{p.description}</Text>
                       </View>
-                      <Pressable onPress={() => addToCart(p)} style={[styles.addBtn, { backgroundColor: dark ? '#F97316' : '#F97316' }]}>
-                        <MaterialCommunityIcons name="cart-plus" size={18} color="#fff" />
-                      </Pressable>
+
+                      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
+                        <View>
+                          <Text style={[styles.price, { color: '#F97316' }]}>{money(p.price)}</Text>
+                          <Text style={{ color: colors.text, opacity: 0.6, fontSize: 12 }}>{p.pack}</Text>
+                        </View>
+                        <Pressable onPress={() => addToCart(p)} style={[styles.addBtn, { backgroundColor: dark ? '#F97316' : '#F97316' }]}>
+                          <MaterialCommunityIcons name="cart-plus" size={18} color="#fff" />
+                        </Pressable>
+                      </View>
                     </View>
                   </View>
-                </View>
-              ))}
+                ))
+              )}
             </View>
           </ScrollView>
         </View>

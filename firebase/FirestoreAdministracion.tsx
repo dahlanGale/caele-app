@@ -1,4 +1,4 @@
-import { addDoc, collection, doc, setDoc } from "firebase/firestore";
+import { addDoc, collection, doc, getDocs, setDoc } from "firebase/firestore";
 import { firestore } from "../app/config/firebase";
 
 class FirestoreAdministracion {
@@ -31,6 +31,26 @@ class FirestoreAdministracion {
         throw error; // Manejo de errores
       }
     }    
+
+    // Método para listar pymes
+    async listarPymes() {
+      try {
+        const q = collection(firestore, 'pymes');
+        const arrayObject: any[] = [];
+        const querySnapshot = await getDocs(q);
+        querySnapshot.forEach((doc) => {
+          arrayObject.push({
+            id: doc.id,
+            ...doc.data(),
+          });
+        });
+  
+        return arrayObject;
+      } catch (error) {
+        throw error; // Manejo de errores
+      }
+    }
+    
 }
 
 export default new FirestoreAdministracion();
