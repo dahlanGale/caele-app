@@ -143,11 +143,6 @@ export const productosCollection = new TypedCollection<{
   stock?: number;
 }>(firestore, (pymeId) => `pymes/${pymeId}/productos`);
 
-export const layoutsCollection = new TypedCollection<{
-  nombre: string;
-  mesas: any[];
-}>(firestore, (pymeId) => `pymes/${pymeId}/layouts`);
-
 export const usuariosCollection = new TypedCollection<{
   nombre?: string;
   email?: string;

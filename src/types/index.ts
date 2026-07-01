@@ -36,21 +36,50 @@ export type Producto = {
   ingredientes?: { insumoId: string; cantidad: number }[];
 };
 
-export type Mesa = {
-  id: string;
-  x: number;
-  y: number;
-  label?: string;
-  shape?: 'circle' | 'rect';
-  capacidad?: number;
-  estado?: 'libre' | 'ocupada' | 'cuenta';
-};
+// --- Módulo de mesas (rediseño: zonas + elementos en grid lógico) ---
 
-export type LayoutMesas = {
+export type TipoDistribucion =
+  | 'restaurante'
+  | 'cafeteria'
+  | 'bar'
+  | 'terraza'
+  | 'banquete'
+  | 'personalizado';
+
+export type ElementoForma = 'redonda' | 'cuadrada' | 'rectangular' | 'barra';
+export type ElementoTipo = 'mesa' | 'entrada' | 'decoracion' | 'texto';
+export type ElementoEstado = 'disponible' | 'ocupada' | 'reservada' | 'cuenta';
+
+export type Zona = {
   id: string;
   nombre: string;
-  mesas: Mesa[];
+  orden: number;
+  activa?: boolean;
 };
+
+export type Elemento = {
+  id: string;
+  tipo: ElementoTipo;
+  forma?: ElementoForma; // solo aplica cuando tipo === 'mesa'
+  nombre: string; // ej. "Mesa 1", "Barra", o texto libre
+  capacidad?: number;
+  fila: number;
+  columna: number;
+  ancho?: number; // colspan lógico (barras/rectangulares largas)
+  estado?: ElementoEstado; // solo aplica cuando tipo === 'mesa'
+};
+
+export type ZonaConElementos = Zona & { elementos: Elemento[] };
+
+// Configuración de la mesa por zona usada durante el wizard
+export type ConfiguracionZona = {
+  nombre: string;
+  cantidadMesas: number;
+  forma: ElementoForma;
+  capacidad: number;
+};
+
+
 
 export type ItemOrden = {
   productoId: string;

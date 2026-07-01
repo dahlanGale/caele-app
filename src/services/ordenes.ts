@@ -1,6 +1,7 @@
-import { layoutsCollection, ordenesCollection } from './firestore';
+import { ordenesCollection } from './firestore';
+import { actualizarEstadoElemento } from './zonas';
 
-import type { ItemOrden, Mesa, Orden } from '@/src/types';
+import type { ElementoEstado, ItemOrden, Orden } from '@/src/types';
 
 export function calcularTotales(items: ItemOrden[]) {
   const subtotal = items.reduce((acc, it) => acc + it.precioUnitario * it.cantidad, 0);
@@ -11,13 +12,14 @@ export function calcularTotales(items: ItemOrden[]) {
 
 export async function crearOrden(
   pymeId: string,
-  mesaId: string,
+  zonaId: string,
+  elementoId: string,
   items: ItemOrden[]
 ): Promise<Orden> {
   const { subtotal, impuestos, total } = calcularTotales(items);
   const now = new Date();
   const orden: Omit<Orden, 'id'> = {
-    mesaId,
+    mesaId: elementoId,
     items,
     subtotal,
     impuestos,
@@ -34,29 +36,27 @@ export async function crearOrden(
 export async function pagarOrden(
   pymeId: string,
   ordenId: string,
-  layoutId: string,
-  mesaId: string
+  zonaId: string,
+  elementoId: string
 ): Promise<void> {
   await ordenesCollection.update(pymeId, ordenId, { estado: 'pagada', updatedAt: new Date() });
-
-  const layout = await layoutsCollection.get(pymeId, layoutId);
-  if (layout) {
-    const mesas = ((layout.mesas as Mesa[]) ?? []).map((m) =>
-      m.id === mesaId ? { ...m, estado: 'libre' as const } : m
-    );
-    await layoutsCollection.set(pymeId, layoutId, { nombre: layout.nombre, mesas });
-  }
+  await actualizarEstadoElemento(pymeId, zonaId, elementoId, 'disponible');
 }
 
 export async function ocuparMesa(
   pymeId: string,
-  layoutId: string,
-  mesaId: string
+  zonaId: string,
+  elementoId: string,
+  estado: ElementoEstado = 'ocupada'
 ): Promise<void> {
-  const layout = await layoutsCollection.get(pymeId, layoutId);
-  if (!layout) return;
-  const mesas = ((layout.mesas as Mesa[]) ?? []).map((m) =>
-    m.id === mesaId ? { ...m, estado: 'ocupada' as const } : m
-  );
-  await layoutsCollection.set(pymeId, layoutId, { nombre: layout.nombre, mesas });
+  await actualizarEstadoElemento(pymeId, zonaId, elementoId, estado);
+}
+
+export async function reabrirMesa(
+  pymeId: string,
+  zonaId: string,
+  elementoId: string,
+  estado: ElementoEstado = 'cuenta'
+): Promise<void> {
+  await actualizarEstadoElemento(pymeId, zonaId, elementoId, estado);
 }
