@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
 import { AuthProvider } from '@/src/context/AuthContext';
+import { PymeProvider } from '@/src/context/PymeContext';
 import { useColorScheme } from '@/src/hooks/useColorScheme';
 import { navigationDarkTheme, navigationLightTheme } from '@/src/theme/navigationTheme';
 import { ThemeProvider } from '@/src/theme/ThemeProvider';
@@ -24,8 +25,9 @@ export default function RootLayout() {
 
   return (
     <AuthProvider>
-      <ThemeProvider>
-        <NavigationThemeProvider value={navigationTheme}>
+      <PymeProvider>
+        <ThemeProvider>
+          <NavigationThemeProvider value={navigationTheme}>
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="(drawer)" />
             <Stack.Screen name="perfil" />
@@ -37,6 +39,7 @@ export default function RootLayout() {
           <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
         </NavigationThemeProvider>
       </ThemeProvider>
+    </PymeProvider>
     </AuthProvider>
   );
 }

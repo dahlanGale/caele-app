@@ -3,24 +3,11 @@ import { Image } from 'expo-image';
 import React, { useMemo, useState } from 'react';
 import { Alert, FlatList, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
 
+import { EmptyState, SkeletonRow } from '@/src/components/ui';
+import { useFirestoreCollection } from '@/src/hooks/useFirestore';
+import { productosCollection } from '@/src/services/firestore';
 import { useAppTheme } from '@/src/theme/ThemeProvider';
-
-export type Producto = {
-  id: string;
-  nombre: string;
-  categoria: string;
-  stock: number;
-  precio: number;
-  imagen?: string;
-};
-
-const MOCK: Producto[] = [
-  { id: '1', nombre: 'Chocolate Cupcake', categoria: 'Cupcake', stock: 12, precio: 25.0, imagen: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=1200&q=80&auto=format&fit=crop' },
-  { id: '2', nombre: 'Mexican VIVA Cupcake', categoria: 'Cupcake', stock: 5, precio: 28.0, imagen: 'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=1200&q=80&auto=format&fit=crop' },
-  { id: '3', nombre: 'Chocochips Croissant', categoria: 'Croissant', stock: 9, precio: 22.02, imagen: 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=1200&q=80&auto=format&fit=crop' },
-  { id: '4', nombre: 'Brown Butter Biscuit', categoria: 'Cookie', stock: 17, precio: 15.5, imagen: 'https://images.unsplash.com/photo-1604908554027-3f3751ce243a?w=1200&q=80&auto=format&fit=crop' },
-  { id: '5', nombre: 'Strawberry Cupcake', categoria: 'Cupcake', stock: 8, precio: 26.0, imagen: 'https://images.unsplash.com/photo-1460306855393-0410f61241c7?w=1200&q=80&auto=format&fit=crop' },
-];
+import type { Producto } from '@/src/types';
 
 const MIN_TABLE_W = 900;
 const CONTENT_MAX_W = 1000;
@@ -38,10 +25,12 @@ export default function TableProductos() {
     : width - PAGE_PADDING * 2;
   const sidePad = Math.max(0, (containerWidth - MIN_TABLE_W) / 2);
 
-  const items = useMemo(() => {
+  const { items, loading } = useFirestoreCollection(productosCollection);
+
+  const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return MOCK.filter((p) => !q || p.nombre.toLowerCase().includes(q) || p.categoria.toLowerCase().includes(q));
-  }, [query]);
+    return items.filter((p) => !q || p.nombre.toLowerCase().includes(q));
+  }, [items, query]);
 
   const toggleSelect = (id: string) => setSelected((s) => ({ ...s, [id]: !s[id] }));
   const money = (n: number) => `$${n.toFixed(2)}`;
@@ -159,54 +148,64 @@ export default function TableProductos() {
               <View style={[styles.cell, { width: 44 }]} />
             </View>
 
-            <FlatList
-              data={items}
-              keyExtractor={(it) => it.id}
-              renderItem={({ item }) => {
-                const checked = !!selected[item.id];
-                return (
-                  <View style={[styles.row, { borderColor: color.border }]}>
-                    <Pressable onPress={() => toggleSelect(item.id)} style={[styles.cell, { width: 44, alignItems: 'center' }]}>
-                      <MaterialCommunityIcons
-                        name={checked ? 'checkbox-marked' : 'checkbox-blank-outline'}
-                        color={checked ? color.accent : color.text}
-                        size={20}
-                      />
-                    </Pressable>
-                    <View style={[styles.cell, { flex: 3, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' }]}>
-                      <Image source={{ uri: item.imagen }} style={[styles.thumb, { backgroundColor: color.border }]} contentFit="cover" />
-                      <View style={{ marginLeft: space[3] }}>
-                        <Text numberOfLines={1} style={{ color: color.text, fontWeight: font.weight.semibold }}>
-                          {item.nombre}
-                        </Text>
+            {loading ? (
+              <SkeletonRow count={4} />
+            ) : filtered.length === 0 ? (
+              <EmptyState icon="basket-off-outline" title="Sin productos" subtitle="Aún no tienes productos registrados." />
+            ) : (
+              <FlatList
+                data={filtered as Producto[]}
+                keyExtractor={(it) => it.id}
+                renderItem={({ item }) => {
+                  const checked = !!selected[item.id];
+                  return (
+                    <View style={[styles.row, { borderColor: color.border }]}>
+                      <Pressable onPress={() => toggleSelect(item.id)} style={[styles.cell, { width: 44, alignItems: 'center' }]}>
+                        <MaterialCommunityIcons
+                          name={checked ? 'checkbox-marked' : 'checkbox-blank-outline'}
+                          color={checked ? color.accent : color.text}
+                          size={20}
+                        />
+                      </Pressable>
+                      <View style={[styles.cell, { flex: 3, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' }]}>
+                        <Image
+                          source={item.imagen ? { uri: item.imagen } : require('@/assets/images/icon.png')}
+                          style={[styles.thumb, { backgroundColor: color.border }]}
+                          contentFit="cover"
+                        />
+                        <View style={{ marginLeft: space[3] }}>
+                          <Text numberOfLines={1} style={{ color: color.text, fontWeight: font.weight.semibold }}>
+                            {item.nombre}
+                          </Text>
+                        </View>
                       </View>
+                      <View style={[styles.cell, { flex: 2 }]}>
+                        <Text style={{ color: color.textMuted }}>{item.categoriaId ?? '-'}</Text>
+                      </View>
+                      <View style={[styles.cell, { flex: 1 }]}>
+                        <Text style={{ color: color.text }}>{item.stock ?? 0}</Text>
+                      </View>
+                      <View style={[styles.cell, { flex: 1 }]}>
+                        <Text style={{ color: color.text, fontWeight: font.weight.semibold }}>{money(item.precio)}</Text>
+                      </View>
+                      <Pressable
+                        onPress={() => Alert.alert('Acciones', `Acciones para ${item.nombre}`)}
+                        style={[styles.cell, { width: 44, alignItems: 'center' }]}
+                      >
+                        <MaterialCommunityIcons name="dots-vertical" color={color.text} size={20} />
+                      </Pressable>
                     </View>
-                    <View style={[styles.cell, { flex: 2 }]}>
-                      <Text style={{ color: color.textMuted }}>{item.categoria}</Text>
-                    </View>
-                    <View style={[styles.cell, { flex: 1 }]}>
-                      <Text style={{ color: color.text }}>{item.stock}</Text>
-                    </View>
-                    <View style={[styles.cell, { flex: 1 }]}>
-                      <Text style={{ color: color.text, fontWeight: font.weight.semibold }}>{money(item.precio)}</Text>
-                    </View>
-                    <Pressable
-                      onPress={() => Alert.alert('Acciones', `Acciones para ${item.nombre}`)}
-                      style={[styles.cell, { width: 44, alignItems: 'center' }]}
-                    >
-                      <MaterialCommunityIcons name="dots-vertical" color={color.text} size={20} />
-                    </Pressable>
-                  </View>
-                );
-              }}
-              ItemSeparatorComponent={() => <View style={{ height: 1, backgroundColor: color.border }} />}
-              contentContainerStyle={{
-                borderWidth: 1,
-                borderColor: color.border,
-                borderRadius: radius.md,
-                overflow: 'hidden',
-              }}
-            />
+                  );
+                }}
+                ItemSeparatorComponent={() => <View style={{ height: 1, backgroundColor: color.border }} />}
+                contentContainerStyle={{
+                  borderWidth: 1,
+                  borderColor: color.border,
+                  borderRadius: radius.md,
+                  overflow: 'hidden',
+                }}
+              />
+            )}
           </View>
         </ScrollView>
       </View>

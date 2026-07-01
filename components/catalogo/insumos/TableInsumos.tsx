@@ -2,23 +2,11 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React, { useMemo, useState } from 'react';
 import { Alert, FlatList, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
 
+import { EmptyState, SkeletonRow } from '@/src/components/ui';
+import { useFirestoreCollection } from '@/src/hooks/useFirestore';
+import { insumosCollection } from '@/src/services/firestore';
 import { useAppTheme } from '@/src/theme/ThemeProvider';
-
-export type Insumo = {
-  id: string;
-  nombre: string;
-  unidad: 'kg' | 'g' | 'l' | 'ml' | 'pz';
-  stock: number;
-  costo: number;
-};
-
-const MOCK: Insumo[] = [
-  { id: 'i1', nombre: 'Harina de trigo', unidad: 'kg', stock: 18, costo: 1.9 },
-  { id: 'i2', nombre: 'Azúcar', unidad: 'kg', stock: 13, costo: 2.2 },
-  { id: 'i3', nombre: 'Mantequilla', unidad: 'kg', stock: 6, costo: 4.5 },
-  { id: 'i4', nombre: 'Leche', unidad: 'l', stock: 25, costo: 1.1 },
-  { id: 'i5', nombre: 'Huevos', unidad: 'pz', stock: 120, costo: 0.24 },
-];
+import type { Insumo } from '@/src/types';
 
 const MIN_TABLE_W = 820;
 const CONTENT_MAX_W = 1000;
@@ -36,10 +24,12 @@ export default function TableInsumos() {
     : width - PAGE_PADDING * 2;
   const sidePad = Math.max(0, (containerWidth - MIN_TABLE_W) / 2);
 
-  const items = useMemo(() => {
+  const { items, loading } = useFirestoreCollection(insumosCollection);
+
+  const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return MOCK.filter((p) => !q || p.nombre.toLowerCase().includes(q));
-  }, [query]);
+    return items.filter((p) => !q || p.nombre.toLowerCase().includes(q));
+  }, [items, query]);
 
   const toggleSelect = (id: string) => setSelected((s) => ({ ...s, [id]: !s[id] }));
   const money = (n: number) => `$${n.toFixed(2)}`;
@@ -157,51 +147,57 @@ export default function TableInsumos() {
               <View style={[styles.cell, { width: 44 }]} />
             </View>
 
-            <FlatList
-              data={items}
-              keyExtractor={(it) => it.id}
-              renderItem={({ item }) => {
-                const checked = !!selected[item.id];
-                return (
-                  <View style={[styles.row, { borderColor: color.border }]}>
-                    <Pressable onPress={() => toggleSelect(item.id)} style={[styles.cell, { width: 44, alignItems: 'center' }]}>
-                      <MaterialCommunityIcons
-                        name={checked ? 'checkbox-marked' : 'checkbox-blank-outline'}
-                        color={checked ? color.accent : color.text}
-                        size={20}
-                      />
-                    </Pressable>
-                    <View style={[styles.cell, { flex: 3 }]}>
-                      <Text numberOfLines={1} style={{ color: color.text, fontWeight: font.weight.semibold }}>
-                        {item.nombre}
-                      </Text>
+            {loading ? (
+              <SkeletonRow count={4} />
+            ) : filtered.length === 0 ? (
+              <EmptyState icon="basket-off-outline" title="Sin insumos" subtitle="Aún no tienes insumos registrados." />
+            ) : (
+              <FlatList
+                data={filtered as Insumo[]}
+                keyExtractor={(it) => it.id}
+                renderItem={({ item }) => {
+                  const checked = !!selected[item.id];
+                  return (
+                    <View style={[styles.row, { borderColor: color.border }]}>
+                      <Pressable onPress={() => toggleSelect(item.id)} style={[styles.cell, { width: 44, alignItems: 'center' }]}>
+                        <MaterialCommunityIcons
+                          name={checked ? 'checkbox-marked' : 'checkbox-blank-outline'}
+                          color={checked ? color.accent : color.text}
+                          size={20}
+                        />
+                      </Pressable>
+                      <View style={[styles.cell, { flex: 3 }]}>
+                        <Text numberOfLines={1} style={{ color: color.text, fontWeight: font.weight.semibold }}>
+                          {item.nombre}
+                        </Text>
+                      </View>
+                      <View style={[styles.cell, { flex: 1 }]}>
+                        <Text style={{ color: color.textMuted }}>{item.unidad}</Text>
+                      </View>
+                      <View style={[styles.cell, { flex: 1 }]}>
+                        <Text style={{ color: color.text }}>{item.stock}</Text>
+                      </View>
+                      <View style={[styles.cell, { flex: 1 }]}>
+                        <Text style={{ color: color.text, fontWeight: font.weight.semibold }}>{money(item.costo)}</Text>
+                      </View>
+                      <Pressable
+                        onPress={() => Alert.alert('Acciones', `Acciones para ${item.nombre}`)}
+                        style={[styles.cell, { width: 44, alignItems: 'center' }]}
+                      >
+                        <MaterialCommunityIcons name="dots-vertical" color={color.text} size={20} />
+                      </Pressable>
                     </View>
-                    <View style={[styles.cell, { flex: 1 }]}>
-                      <Text style={{ color: color.textMuted }}>{item.unidad}</Text>
-                    </View>
-                    <View style={[styles.cell, { flex: 1 }]}>
-                      <Text style={{ color: color.text }}>{item.stock}</Text>
-                    </View>
-                    <View style={[styles.cell, { flex: 1 }]}>
-                      <Text style={{ color: color.text, fontWeight: font.weight.semibold }}>{money(item.costo)}</Text>
-                    </View>
-                    <Pressable
-                      onPress={() => Alert.alert('Acciones', `Acciones para ${item.nombre}`)}
-                      style={[styles.cell, { width: 44, alignItems: 'center' }]}
-                    >
-                      <MaterialCommunityIcons name="dots-vertical" color={color.text} size={20} />
-                    </Pressable>
-                  </View>
-                );
-              }}
-              ItemSeparatorComponent={() => <View style={{ height: 1, backgroundColor: color.border }} />}
-              contentContainerStyle={{
-                borderWidth: 1,
-                borderColor: color.border,
-                borderRadius: radius.md,
-                overflow: 'hidden',
-              }}
-            />
+                  );
+                }}
+                ItemSeparatorComponent={() => <View style={{ height: 1, backgroundColor: color.border }} />}
+                contentContainerStyle={{
+                  borderWidth: 1,
+                  borderColor: color.border,
+                  borderRadius: radius.md,
+                  overflow: 'hidden',
+                }}
+              />
+            )}
           </View>
         </ScrollView>
       </View>

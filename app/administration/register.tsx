@@ -10,6 +10,7 @@ import { Button } from '@/src/components/ui';
 import { Input } from '@/src/components/ui/Input';
 import { useAppTheme } from '@/src/theme/ThemeProvider';
 import FirestoreAdministracion from '../../firebase/FirestoreAdministracion';
+import FirestoreUsuarios from '../../firebase/FirestoreUsuarios';
 
 export default function RegisterScreen() {
   const { color, space, radius, font, shadow } = useAppTheme();
@@ -51,6 +52,15 @@ export default function RegisterScreen() {
         celular: celular.trim(),
         nombreNegocio: businessName.trim(),
         isAdmin: true,
+      });
+
+      await FirestoreUsuarios.registrarUsuario({
+        id: cred.user.uid,
+        nombre: name.trim(),
+        email: email.trim(),
+        telefono: celular.trim(),
+        rol: 'admin',
+        pymeId: cred.user.uid,
       });
 
       router.replace('/(drawer)/dashboard');

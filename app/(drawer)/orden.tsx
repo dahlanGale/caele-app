@@ -4,6 +4,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
 
 import { Chip } from '@/src/components/ui';
+import { useFirestoreCollection } from '@/src/hooks/useFirestore';
+import { categoriasCollection, productosCollection } from '@/src/services/firestore';
 import { useAppTheme } from '@/src/theme/ThemeProvider';
 
 export default function OrdenScreen() {
@@ -15,10 +17,12 @@ export default function OrdenScreen() {
   const chipSpacing = Platform.OS === 'web' || isWide ? 8 : 10;
 
   const [query, setQuery] = useState('');
-  const CATEGORIES = ['Signature', 'Croissant', 'Waffle', 'Coffee', 'Ice Cream'] as const;
-  type Category = typeof CATEGORIES[number];
-  const [category, setCategory] = useState<Category>('Croissant');
+  const [category, setCategory] = useState<string>('');
   const [cartOpen, setCartOpen] = useState(false);
+  const { items: rawProducts, loading: productsLoading } = useFirestoreCollection(productosCollection);
+  const { items: categories, loading: categoriesLoading } = useFirestoreCollection(categoriasCollection);
+
+  const CATEGORIES = useMemo(() => categories.map((c) => c.nombre), [categories]);
 
   type Product = {
     id: string;
@@ -26,77 +30,34 @@ export default function OrdenScreen() {
     description: string;
     price: number;
     pack: string;
-    category: Category;
+    category: string;
     image: string;
   };
 
   const PRODUCTS: Product[] = useMemo(
-    () => [
-      {
-        id: 'p1',
-        title: 'Almond Brown Sugar Croissant',
-        description: 'Sweet croissant with topping almonds and brown sugar',
-        price: 12.98,
-        pack: '3 pcs',
-        category: 'Croissant',
-        image: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?q=80&w=1200&auto=format&fit=crop',
-      },
-      {
-        id: 'p2',
-        title: 'Smoke Tenderloin Slice Croissant',
-        description: 'Plain croissant with smoke tenderloin beef and veggies',
-        price: 10.01,
-        pack: '2 pcs',
-        category: 'Croissant',
-        image: 'https://images.unsplash.com/photo-1549934159-9157c3fdaf29?q=80&w=1200&auto=format&fit=crop',
-      },
-      {
-        id: 'p3',
-        title: 'Berry Whipped Cream Croissant',
-        description: 'Sweet croissant with blueberries and strawberries',
-        price: 8.92,
-        pack: '3 pcs',
-        category: 'Croissant',
-        image: 'https://images.unsplash.com/photo-1505826759031-7b68b38ad75b?q=80&w=1200&auto=format&fit=crop',
-      },
-      {
-        id: 'p4',
-        title: 'Sweet Granulated Sugar Croissant',
-        description: 'Classic croissant dusted with sugar',
-        price: 5.58,
-        pack: '1 pc',
-        category: 'Croissant',
-        image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=1200&auto=format&fit=crop',
-      },
-      {
-        id: 'p5',
-        title: 'Sweet Chocolate Chocochips Croissant',
-        description: 'Croissant filled with chocolate and chocochips',
-        price: 22.02,
-        pack: '2 pcs',
-        category: 'Croissant',
-        image: 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?q=80&w=1200&auto=format&fit=crop',
-      },
-      {
-        id: 'p6',
-        title: 'Basic Croissant La Ta Dhore',
-        description: 'Buttery basic croissant',
-        price: 4.75,
-        pack: '1 pc',
-        category: 'Croissant',
-        image: 'https://images.unsplash.com/photo-1542831371-29b0f74f9713?q=80&w=1200&auto=format&fit=crop',
-      },
-    ],
-    []
+    () =>
+      rawProducts.map((p) => ({
+        id: p.id,
+        title: p.nombre,
+        description: p.descripcion ?? '',
+        price: p.precio,
+        pack: `${p.stock ?? 1} disponible`,
+        category: p.categoriaId ?? 'Sin categoría',
+        image: p.imagen ?? '',
+      })),
+    [rawProducts]
   );
 
   useEffect(() => {
+    if (categoriesLoading) return;
     const firstWithItems = CATEGORIES.find((c) => PRODUCTS.some((p) => p.category === c));
     if (firstWithItems && firstWithItems !== category) {
       setCategory(firstWithItems);
+    } else if (!category && CATEGORIES.length > 0) {
+      setCategory(CATEGORIES[0]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [CATEGORIES, productsLoading, categoriesLoading]);
 
   type CartState = Record<string, { qty: number; product: Product }>;
   const [cart, setCart] = useState<CartState>({});

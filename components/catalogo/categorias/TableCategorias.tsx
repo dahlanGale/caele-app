@@ -2,21 +2,11 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React, { useMemo, useState } from 'react';
 import { Alert, FlatList, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 
+import { EmptyState, SkeletonRow } from '@/src/components/ui';
+import { useFirestoreCollection } from '@/src/hooks/useFirestore';
+import { categoriasCollection } from '@/src/services/firestore';
 import { useAppTheme } from '@/src/theme/ThemeProvider';
-
-export type Categoria = {
-  id: string;
-  nombre: string;
-  productos: number;
-  activa: boolean;
-};
-
-const MOCK: Categoria[] = [
-  { id: 'c1', nombre: 'Cupcake', productos: 24, activa: true },
-  { id: 'c2', nombre: 'Croissant', productos: 12, activa: true },
-  { id: 'c3', nombre: 'Cookie', productos: 9, activa: true },
-  { id: 'c4', nombre: 'Bebidas', productos: 7, activa: false },
-];
+import type { Categoria } from '@/src/types';
 
 const MIN_TABLE_W = 720;
 const CONTENT_MAX_W = 1000;
@@ -33,10 +23,12 @@ export default function TableCategorias() {
     : width - PAGE_PADDING * 2;
   const sidePad = Math.max(0, (containerWidth - MIN_TABLE_W) / 2);
 
-  const items = useMemo(() => {
+  const { items, loading } = useFirestoreCollection(categoriasCollection);
+
+  const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return MOCK.filter((p) => !q || p.nombre.toLowerCase().includes(q));
-  }, [query]);
+    return items.filter((p) => !q || p.nombre.toLowerCase().includes(q));
+  }, [items, query]);
 
   return (
     <View style={{ flex: 1 }}>
@@ -124,47 +116,53 @@ export default function TableCategorias() {
               <View style={[styles.cell, { width: 44 }]} />
             </View>
 
-            <FlatList
-              data={items}
-              keyExtractor={(it) => it.id}
-              renderItem={({ item }) => (
-                <View style={[styles.row, { borderColor: color.border }]}>
-                  <View style={[styles.cell, { flex: 3 }]}>
-                    <Text numberOfLines={1} style={{ color: color.text, fontWeight: font.weight.semibold }}>
-                      {item.nombre}
-                    </Text>
+            {loading ? (
+              <SkeletonRow count={3} />
+            ) : filtered.length === 0 ? (
+              <EmptyState icon="shape-outline" title="Sin categorías" subtitle="Aún no tienes categorías registradas." />
+            ) : (
+              <FlatList
+                data={filtered as Categoria[]}
+                keyExtractor={(it) => it.id}
+                renderItem={({ item }) => (
+                  <View style={[styles.row, { borderColor: color.border }]}>
+                    <View style={[styles.cell, { flex: 3 }]}>
+                      <Text numberOfLines={1} style={{ color: color.text, fontWeight: font.weight.semibold }}>
+                        {item.nombre}
+                      </Text>
+                    </View>
+                    <View style={[styles.cell, { flex: 1 }]}>
+                      <Text style={{ color: color.text }}>{item.productos ?? 0}</Text>
+                    </View>
+                    <View style={[styles.cell, { flex: 1, flexDirection: 'row', alignItems: 'center' }]}>
+                      <View
+                        style={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: 999,
+                          backgroundColor: item.activa ? color.success : color.warning,
+                          marginRight: space[2],
+                        }}
+                      />
+                      <Text style={{ color: color.textMuted }}>{item.activa ? 'Activa' : 'Inactiva'}</Text>
+                    </View>
+                    <Pressable
+                      onPress={() => Alert.alert('Acciones', `Acciones para ${item.nombre}`)}
+                      style={[styles.cell, { width: 44, alignItems: 'center' }]}
+                    >
+                      <MaterialCommunityIcons name="dots-vertical" color={color.text} size={20} />
+                    </Pressable>
                   </View>
-                  <View style={[styles.cell, { flex: 1 }]}>
-                    <Text style={{ color: color.text }}>{item.productos}</Text>
-                  </View>
-                  <View style={[styles.cell, { flex: 1, flexDirection: 'row', alignItems: 'center' }]}>
-                    <View
-                      style={{
-                        width: 8,
-                        height: 8,
-                        borderRadius: 999,
-                        backgroundColor: item.activa ? color.success : color.warning,
-                        marginRight: space[2],
-                      }}
-                    />
-                    <Text style={{ color: color.textMuted }}>{item.activa ? 'Activa' : 'Inactiva'}</Text>
-                  </View>
-                  <Pressable
-                    onPress={() => Alert.alert('Acciones', `Acciones para ${item.nombre}`)}
-                    style={[styles.cell, { width: 44, alignItems: 'center' }]}
-                  >
-                    <MaterialCommunityIcons name="dots-vertical" color={color.text} size={20} />
-                  </Pressable>
-                </View>
-              )}
-              ItemSeparatorComponent={() => <View style={{ height: 1, backgroundColor: color.border }} />}
-              contentContainerStyle={{
-                borderWidth: 1,
-                borderColor: color.border,
-                borderRadius: radius.md,
-                overflow: 'hidden',
-              }}
-            />
+                )}
+                ItemSeparatorComponent={() => <View style={{ height: 1, backgroundColor: color.border }} />}
+                contentContainerStyle={{
+                  borderWidth: 1,
+                  borderColor: color.border,
+                  borderRadius: radius.md,
+                  overflow: 'hidden',
+                }}
+              />
+            )}
           </View>
         </ScrollView>
       </View>
