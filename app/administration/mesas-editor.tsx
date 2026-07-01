@@ -30,22 +30,13 @@ const TIPOS_PALETTE: { tipo: ElementoTipo; label: string; icon: string }[] = [
   { tipo: 'texto', label: 'Texto', icon: 'text-outline' },
 ];
 
-function snapGrid(value: number, cols: number) {
-  const fila = Math.floor(value / cols);
-  const col = value % cols;
-  return { fila, col };
-}
-
-function cloneZonas(zonas: ZonaConElementos[]): ZonaConElementos[] {
-  return zonas.map((z) => ({ ...z, elementos: z.elementos.map((e) => ({ ...e })) }));
-}
-
 export default function MesasEditorScreen() {
   const { color, space, radius, font } = useAppTheme();
   const { pyme } = usePyme();
   const [zonas, setZonas] = useState<ZonaConElementos[]>([]);
   const [selectedZonaId, setSelectedZonaId] = useState<string | null>(null);
   const [selectedElementoId, setSelectedElementoId] = useState<string | null>(null);
+  const [dragMode, setDragMode] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -66,6 +57,7 @@ export default function MesasEditorScreen() {
       return () => unsubs.forEach((fn) => fn());
     });
     return () => unsub();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pyme?.id]);
 
   const selectedZona = useMemo(
@@ -157,6 +149,64 @@ export default function MesasEditorScreen() {
       prev.map((z) => (z.id === selectedZona.id ? { ...z, elementos: z.elementos.filter((e) => e.id !== selectedElemento.id) } : z))
     );
     setSelectedElementoId(null);
+  };
+
+  const handleElementoDragEnd = (elemento: Elemento, targetRow: number, targetCol: number) => {
+    if (!selectedZona) return;
+    const targetOccupied = selectedZona.elementos.find(
+      (e) => e.id !== elemento.id && e.fila === targetRow && e.columna === targetCol
+    );
+    if (targetOccupied) {
+      // Intercambiar posiciones
+      setZonas((prev) =>
+        prev.map((z) => {
+          if (z.id !== selectedZona.id) return z;
+          return {
+            ...z,
+            elementos: z.elementos.map((e) => {
+              if (e.id === elemento.id) return { ...e, fila: targetRow, columna: targetCol };
+              if (e.id === targetOccupied.id) return { ...e, fila: elemento.fila, columna: elemento.columna };
+              return e;
+            }),
+          };
+        })
+      );
+    } else {
+      updateElemento({ fila: targetRow, columna: targetCol });
+    }
+  };
+
+  const restablecerOrden = () => {
+    if (!selectedZona) return;
+    Alert.alert('Restablecer orden', '¿Reorganizar las mesas en una cuadrícula limpia?', [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Restablecer',
+        style: 'destructive',
+        onPress: () => {
+          setZonas((prev) =>
+            prev.map((z) => {
+              if (z.id !== selectedZona.id) return z;
+              const cols = 8;
+              let col = 0;
+              let row = 0;
+              const sorted = [...z.elementos].sort((a, b) => (a.fila - b.fila) * cols + a.columna - b.columna);
+              const nuevos = sorted.map((e) => {
+                const ancho = e.ancho ?? 1;
+                const next = { ...e, fila: row, columna: col };
+                col += ancho;
+                if (col >= cols) {
+                  col = 0;
+                  row++;
+                }
+                return next;
+              });
+              return { ...z, elementos: nuevos };
+            })
+          );
+        },
+      },
+    ]);
   };
 
   const aplicarPlantillaAZona = (plantillaKey: string) => {
@@ -272,8 +322,10 @@ export default function MesasEditorScreen() {
             {selectedZona ? (
               <ZonaGrid
                 zona={selectedZona}
+                dragMode={dragMode}
                 selectedId={selectedElementoId}
                 onElementoPress={(el) => setSelectedElementoId(el.id === selectedElementoId ? null : el.id)}
+                onElementoDragEnd={handleElementoDragEnd}
               />
             ) : (
               <Text style={{ color: color.textMuted, textAlign: 'center', marginTop: 48 }}>Selecciona o agrega una zona</Text>
@@ -281,6 +333,14 @@ export default function MesasEditorScreen() {
           </ScrollView>
 
           <View style={[styles.panel, { backgroundColor: color.bgElevated, borderTopColor: color.border, padding: space[4] }]}>
+            <View style={{ flexDirection: 'row', gap: space[2], marginBottom: space[3] }}>
+              <Button
+                title={dragMode ? 'Listo' : 'Mover mesas'}
+                variant={dragMode ? 'primary' : 'outline'}
+                onPress={() => setDragMode((v) => !v)}
+              />
+              <Button title="Restablecer orden" variant="outline" onPress={restablecerOrden} />
+            </View>
             {!selectedElemento ? (
               <View style={{ gap: space[3] }}>
                 <Text style={[styles.panelTitle, { color: color.text, fontWeight: font.weight.semibold }]}>

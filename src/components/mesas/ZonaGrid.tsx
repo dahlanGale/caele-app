@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
+import { DraggableElementoCard } from './DraggableElementoCard';
 import { ElementoCard } from './ElementoCard';
 
 import { useAppTheme } from '@/src/theme/ThemeProvider';
@@ -40,12 +41,14 @@ function buildGrid(elementos: Elemento[]) {
 
 type Props = {
   zona: Zona & { elementos: Elemento[] };
+  dragMode?: boolean;
   onElementoPress?: (elemento: Elemento) => void;
   onElementoLongPress?: (elemento: Elemento) => void;
+  onElementoDragEnd?: (elemento: Elemento, targetRow: number, targetCol: number) => void;
   selectedId?: string | null;
 };
 
-export function ZonaGrid({ zona, onElementoPress, onElementoLongPress, selectedId }: Props) {
+export function ZonaGrid({ zona, dragMode, onElementoPress, onElementoLongPress, onElementoDragEnd, selectedId }: Props) {
   const { color, font, space, radius } = useAppTheme();
   const { width } = useWindowDimensions();
   const rows = useMemo(() => buildGrid(zona.elementos), [zona.elementos]);
@@ -73,7 +76,17 @@ export function ZonaGrid({ zona, onElementoPress, onElementoLongPress, selectedI
                 const el = cell.elemento;
                 const ancho = el.ancho ?? 1;
                 const widthStyle = ancho > 1 ? cellSize * ancho + GAP * (ancho - 1) : cellSize;
-                return (
+                return dragMode ? (
+                  <DraggableElementoCard
+                    key={colIdx}
+                    elemento={el}
+                    size={cellSize}
+                    cellSize={cellSize}
+                    gap={GAP}
+                    selected={selectedId === el.id}
+                    onDragEnd={(row, col) => onElementoDragEnd?.(el, row, col)}
+                  />
+                ) : (
                   <ElementoCard
                     key={colIdx}
                     elemento={el}

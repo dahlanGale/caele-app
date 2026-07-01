@@ -6,7 +6,6 @@ import type { Elemento, ZonaConElementos } from '@/src/types';
 export function useRestaurante(pymeId: string | undefined) {
   const [zonas, setZonas] = useState<ZonaConElementos[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     if (!pymeId) {
@@ -60,5 +59,5 @@ export function useRestaurante(pymeId: string | undefined) {
     return { total, disponibles, ocupadas, cuentas, reservadas };
   }, [zonas]);
 
-  return { zonas, estadisticas, loading, error };
+  return { zonas, estadisticas, loading };
 }
