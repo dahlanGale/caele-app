@@ -89,12 +89,7 @@ export class TypedCollection<T extends object> {
 
   async set(pymeId: string, id: string, data: Partial<T>): Promise<void> {
     const ref = this.docRef(pymeId, id);
-    const snap = await getDoc(ref);
-    if (snap.exists()) {
-      await updateDoc(ref, data as any);
-    } else {
-      await setDoc(ref, data as any);
-    }
+    await setDoc(ref, data as any, { merge: true });
   }
 
   async update(pymeId: string, id: string, data: Partial<T>): Promise<void> {

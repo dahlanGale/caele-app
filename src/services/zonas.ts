@@ -88,7 +88,7 @@ export async function actualizarEstadoElemento(
   elementoId: string,
   estado: ElementoEstado
 ): Promise<void> {
-  await elementosCollection(pymeId, zonaId).update(pymeId, elementoId, { estado });
+  await elementosCollection(pymeId, zonaId).set(pymeId, elementoId, { estado });
 }
 
 export async function reordenarElementos(
