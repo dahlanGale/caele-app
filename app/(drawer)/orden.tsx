@@ -109,7 +109,7 @@ export default function OrdenScreen() {
 
   const itemCount = useMemo(() => Object.values(cart).reduce((acc, it) => acc + it.qty, 0), [cart]);
 
-  const { mesaId } = useLocalSearchParams<{ mesaId?: string }>();
+  const { mesaId, zonaId } = useLocalSearchParams<{ mesaId?: string; zonaId?: string }>();
   const { pyme } = usePyme();
   const [ordenId, setOrdenId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -129,7 +129,7 @@ export default function OrdenScreen() {
     if (!pyme || cartItems.length === 0) return;
     setSaving(true);
     try {
-      const orden = await crearOrden(pyme.id, mesaId ?? 'mostrador', cartItems);
+      const orden = await crearOrden(pyme.id, zonaId ?? 'mostrador', mesaId ?? 'mostrador', cartItems);
       setOrdenId(orden.id);
       Alert.alert('Orden guardada', `Total: ${money(orden.total)}`);
     } catch (e: any) {
@@ -143,7 +143,7 @@ export default function OrdenScreen() {
     if (!pyme || !ordenId) return;
     setSaving(true);
     try {
-      await pagarOrden(pyme.id, ordenId, 'default', mesaId ?? 'mostrador');
+      await pagarOrden(pyme.id, ordenId, zonaId ?? 'mostrador', mesaId ?? 'mostrador');
       Alert.alert('Pago completado', 'La orden fue pagada y la mesa liberada.');
       setCart({});
       setOrdenId(null);

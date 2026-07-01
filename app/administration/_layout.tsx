@@ -18,6 +18,8 @@ export default function AdministrationLayout() {
       <Stack.Screen name="register" />
       <Stack.Screen name="perfil" />
       <Stack.Screen name="ajustes" />
+      <Stack.Screen name="mesas-wizard" />
+      <Stack.Screen name="mesas-editor" />
     </Stack>
   );
 }

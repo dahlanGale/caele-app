@@ -4,15 +4,16 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Card } from '@/src/components/ui';
 import { usePyme } from '@/src/context/PymeContext';
 import { useFirestoreCollection } from '@/src/hooks/useFirestore';
-import { layoutsCollection, ordenesCollection } from '@/src/services/firestore';
+import { useRestaurante } from '@/src/hooks/useRestaurante';
+import { ordenesCollection } from '@/src/services/firestore';
 import { useAppTheme } from '@/src/theme/ThemeProvider';
-import type { Mesa, Orden } from '@/src/types';
+import type { Orden } from '@/src/types';
 
 export default function DashboardScreen() {
   const { color, space, radius, font } = useAppTheme();
   const { pyme } = usePyme();
   const { items: ordenes, loading: loadingOrdenes } = useFirestoreCollection(ordenesCollection);
-  const { items: layouts, loading: loadingLayouts } = useFirestoreCollection(layoutsCollection);
+  const { estadisticas, loading: loadingRestaurante } = useRestaurante(pyme?.id);
 
   const today = useMemo(() => new Date().toDateString(), []);
 
@@ -23,11 +24,9 @@ export default function DashboardScreen() {
       .reduce((acc, o) => acc + o.total, 0);
     const abiertas = (ordenes as Orden[]).filter((o) => o.estado === 'abierta').length;
     const totalVentas = ordenesPagadas.reduce((acc, o) => acc + o.total, 0);
-    const mesasOcupadas = layouts.reduce((acc, layout) => {
-      return acc + ((layout.mesas as Mesa[]) ?? []).filter((m) => m.estado === 'ocupada').length;
-    }, 0);
+    const mesasOcupadas = estadisticas.ocupadas;
     return { ventasHoy, abiertas, totalVentas, mesasOcupadas, ordenesCount: ordenes.length };
-  }, [ordenes, layouts, today]);
+  }, [ordenes, estadisticas, today]);
 
   const money = (n: number) => `$${n.toFixed(2)}`;
 
@@ -57,7 +56,7 @@ export default function DashboardScreen() {
           <Card style={{ flex: 1, minWidth: 140, padding: space[4], borderRadius: radius.lg }}>
             <Text style={{ color: color.textMuted, fontSize: font.size.sm, marginBottom: space[1] }}>Mesas ocupadas</Text>
             <Text style={{ color: color.accent, fontSize: font.size.xl, fontWeight: font.weight.bold }}>
-              {loadingLayouts ? '...' : stats.mesasOcupadas}
+              {loadingRestaurante ? '...' : stats.mesasOcupadas}
             </Text>
           </Card>
           <Card style={{ flex: 1, minWidth: 140, padding: space[4], borderRadius: radius.lg }}>
