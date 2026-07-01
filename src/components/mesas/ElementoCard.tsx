@@ -22,13 +22,14 @@ const ESTADO_LABELS: Record<ElementoEstado, string> = {
 type Props = {
   elemento: Elemento;
   size?: number;
+  width?: number;
   onPress?: () => void;
   onLongPress?: () => void;
   selected?: boolean;
   disabled?: boolean;
 };
 
-export function ElementoCard({ elemento, size = 72, onPress, onLongPress, selected, disabled }: Props) {
+export function ElementoCard({ elemento, size = 72, width, onPress, onLongPress, selected, disabled }: Props) {
   const { color, font, radius, space } = useAppTheme();
   const estado = elemento.estado ?? 'disponible';
   const estadoColor = color[ESTADO_COLORS[estado]];
@@ -51,7 +52,7 @@ export function ElementoCard({ elemento, size = 72, onPress, onLongPress, select
       style={[
         styles.card,
         {
-          width: size,
+          width: width ?? size,
           height: size,
           backgroundColor: isMesa ? color.bgElevated : 'transparent',
           borderColor: selected ? color.accent : estadoColor,

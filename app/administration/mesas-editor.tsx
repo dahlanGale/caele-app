@@ -20,7 +20,7 @@ import { usePyme } from '@/src/context/PymeContext';
 import { PLANTILLAS } from '@/src/services/templates';
 import { elementosCollection, zonasCollection } from '@/src/services/zonas';
 import { useAppTheme } from '@/src/theme/ThemeProvider';
-import type { Elemento, ElementoForma, ElementoTipo, ZonaConElementos } from '@/src/types';
+import type { Elemento, ElementoForma, ElementoTipo, Zona, ZonaConElementos } from '@/src/types';
 
 const FORMAS: ElementoForma[] = ['redonda', 'cuadrada', 'rectangular', 'barra'];
 const TIPOS_PALETTE: { tipo: ElementoTipo; label: string; icon: string }[] = [
@@ -79,8 +79,18 @@ export default function MesasEditorScreen() {
   );
 
   const addZona = () => {
+    const pisos = Array.from(new Set(zonas.map((z) => z.piso).filter(Boolean)));
+    const pisoDefault = pisos[0] ?? 'Piso 1';
     const name = `Zona ${zonas.length + 1}`;
-    setZonas((prev) => [...prev, { id: `new-${Date.now()}`, nombre: name, orden: prev.length, activa: true, elementos: [] }]);
+    setZonas((prev) => [
+      ...prev,
+      { id: `new-${Date.now()}`, nombre: name, piso: pisoDefault, orden: prev.length, activa: true, elementos: [] },
+    ]);
+  };
+
+  const updateZona = (patch: Partial<Zona>) => {
+    if (!selectedZona) return;
+    setZonas((prev) => prev.map((z) => (z.id === selectedZona.id ? { ...z, ...patch } : z)));
   };
 
   const addElemento = (tipo: ElementoTipo) => {
@@ -189,6 +199,7 @@ export default function MesasEditorScreen() {
         zonas.map((z, i) =>
           zonasCollection.set(pyme.id, z.id, {
             nombre: z.nombre,
+            piso: z.piso,
             orden: i,
             activa: z.activa ?? true,
           })
@@ -249,6 +260,7 @@ export default function MesasEditorScreen() {
                 ]}
               >
                 <Text style={{ color: color.text, fontWeight: font.weight.semibold }}>{z.nombre}</Text>
+                <Text style={{ color: color.textMuted, fontSize: 11 }}>{z.piso}</Text>
               </Pressable>
             ))}
             <Pressable onPress={addZona} style={[styles.zonaTab, { backgroundColor: color.bgSubtle, borderRadius: radius.md }]}>
@@ -271,6 +283,15 @@ export default function MesasEditorScreen() {
           <View style={[styles.panel, { backgroundColor: color.bgElevated, borderTopColor: color.border, padding: space[4] }]}>
             {!selectedElemento ? (
               <View style={{ gap: space[3] }}>
+                <Text style={[styles.panelTitle, { color: color.text, fontWeight: font.weight.semibold }]}>
+                  {selectedZona?.nombre}
+                </Text>
+                <Text style={{ color: color.textMuted, fontSize: font.size.sm }}>Piso</Text>
+                <TextInput
+                  value={selectedZona?.piso ?? 'Piso 1'}
+                  onChangeText={(v) => updateZona({ piso: v })}
+                  style={[styles.input, { color: color.text, borderColor: color.border, backgroundColor: color.bg }]}
+                />
                 <Text style={[styles.panelTitle, { color: color.text, fontWeight: font.weight.semibold }]}>
                   Paleta de elementos
                 </Text>

@@ -51,11 +51,13 @@ export function generarElementos(
 export async function crearZona(
   pymeId: string,
   nombre: string,
+  piso: string,
   orden: number,
   configuracion?: ConfiguracionZona
 ): Promise<{ zonaId: string; elementos: Elemento[] }> {
   const zonaId = await zonasCollection.create(pymeId, {
     nombre,
+    piso,
     orden,
     activa: true,
   });

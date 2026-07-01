@@ -1,23 +1,32 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, Stack } from 'expo-router';
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { ZonaGrid } from '@/src/components/mesas';
 import { Button } from '@/src/components/ui';
-import { useAuth } from '@/src/context/AuthContext';
 import { usePyme } from '@/src/context/PymeContext';
 import { useRestaurante } from '@/src/hooks/useRestaurante';
 import { ocuparMesa } from '@/src/services/ordenes';
 import { useAppTheme } from '@/src/theme/ThemeProvider';
-import type { Elemento } from '@/src/types';
+import type { Elemento, ZonaConElementos } from '@/src/types';
 
 export default function MesasScreen() {
   const { color, space, font } = useAppTheme();
   const { pyme } = usePyme();
-  const { user } = useAuth();
   const { zonas, estadisticas, loading } = useRestaurante(pyme?.id);
   const isAdmin = pyme?.isAdmin || true; // Simplificación: en POS pequeño todos pueden editar; ajustar según rol de usuario.
+
+  const pisos = useMemo(() => {
+    const map = new Map<string, ZonaConElementos[]>();
+    zonas.forEach((z) => {
+      const piso = z.piso || 'Piso 1';
+      const list = map.get(piso) ?? [];
+      list.push(z);
+      map.set(piso, list);
+    });
+    return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b));
+  }, [zonas]);
 
   const handleElementoPress = useCallback(
     async (elemento: Elemento, zonaId: string) => {
@@ -99,12 +108,26 @@ export default function MesasScreen() {
         </View>
 
         <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: space[4] }}>
-          {zonas.map((zona) => (
-            <ZonaGrid
-              key={zona.id}
-              zona={zona}
-              onElementoPress={(el) => handleElementoPress(el, zona.id)}
-            />
+          {pisos.map(([piso, pisoZonas]) => (
+            <View key={piso} style={{ marginBottom: space[4] }}>
+              <Text
+                style={{
+                  color: color.text,
+                  fontSize: font.size.lg,
+                  fontWeight: font.weight.bold,
+                  marginBottom: space[3],
+                }}
+              >
+                {piso}
+              </Text>
+              {pisoZonas.map((zona) => (
+                <ZonaGrid
+                  key={zona.id}
+                  zona={zona}
+                  onElementoPress={(el) => handleElementoPress(el, zona.id)}
+                />
+              ))}
+            </View>
           ))}
         </ScrollView>
       </View>

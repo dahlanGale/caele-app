@@ -50,9 +50,16 @@ export type ElementoForma = 'redonda' | 'cuadrada' | 'rectangular' | 'barra';
 export type ElementoTipo = 'mesa' | 'entrada' | 'decoracion' | 'texto';
 export type ElementoEstado = 'disponible' | 'ocupada' | 'reservada' | 'cuenta';
 
+export type Piso = {
+  id: string;
+  nombre: string;
+  orden: number;
+};
+
 export type Zona = {
   id: string;
   nombre: string;
+  piso: string;
   orden: number;
   activa?: boolean;
 };
@@ -74,6 +81,7 @@ export type ZonaConElementos = Zona & { elementos: Elemento[] };
 // Configuración de la mesa por zona usada durante el wizard
 export type ConfiguracionZona = {
   nombre: string;
+  piso: string;
   cantidadMesas: number;
   forma: ElementoForma;
   capacidad: number;

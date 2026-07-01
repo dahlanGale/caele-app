@@ -2,24 +2,24 @@ import { Ionicons } from '@expo/vector-icons';
 import { router, Stack } from 'expo-router';
 import React, { useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
+    ActivityIndicator,
+    Alert,
+    KeyboardAvoidingView,
+    Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    View,
 } from 'react-native';
 
 import { Button } from '@/src/components/ui';
 import { Chip } from '@/src/components/ui/Chip';
 import { usePyme } from '@/src/context/PymeContext';
 import { pymeCollection } from '@/src/services/firestore';
+import { PLANTILLAS, plantillasPorTipo, TIPOS_DISTRIBUCION } from '@/src/services/templates';
 import { crearZona } from '@/src/services/zonas';
-import { TIPOS_DISTRIBUCION, PLANTILLAS, plantillasPorTipo } from '@/src/services/templates';
 import { useAppTheme } from '@/src/theme/ThemeProvider';
 import type { ConfiguracionZona, ElementoForma, TipoDistribucion } from '@/src/types';
 
@@ -44,9 +44,11 @@ export default function MesasWizardScreen() {
   };
 
   const addZona = () => {
+    const pisosUnicos = Array.from(new Set(zonas.map((z) => z.piso).filter(Boolean)));
+    const pisoDefault = pisosUnicos[0] ?? 'Piso 1';
     setZonas((prev) => [
       ...prev,
-      { nombre: `Zona ${prev.length + 1}`, cantidadMesas: 4, forma: 'redonda', capacidad: 4 },
+      { nombre: `Zona ${prev.length + 1}`, piso: pisoDefault, cantidadMesas: 4, forma: 'redonda', capacidad: 4 },
     ]);
   };
 
@@ -68,7 +70,7 @@ export default function MesasWizardScreen() {
     try {
       await pymeCollection.set(pyme.id, pyme.id, { nombreNegocio });
       await Promise.all(
-        zonas.map((z, i) => crearZona(pyme.id, z.nombre, i, z))
+        zonas.map((z, i) => crearZona(pyme.id, z.nombre, z.piso, i, z))
       );
       router.replace('/(drawer)/mesas');
     } catch (e: any) {
@@ -160,6 +162,14 @@ export default function MesasWizardScreen() {
                     onChangeText={(v) => updateZona(idx, { nombre: v })}
                     style={[styles.zonaInput, { color: color.text, borderColor: color.border }]}
                   />
+                  <View style={{ flexDirection: 'row', gap: space[2], alignItems: 'center', marginBottom: space[2] }}>
+                    <Text style={{ color: color.textMuted, fontSize: font.size.sm }}>Piso</Text>
+                    <TextInput
+                      value={z.piso}
+                      onChangeText={(v) => updateZona(idx, { piso: v })}
+                      style={[styles.zonaInput, { color: color.text, borderColor: color.border, flex: 1 }]}
+                    />
+                  </View>
                   <View style={{ flexDirection: 'row', gap: space[2], alignItems: 'center' }}>
                     <Text style={{ color: color.textMuted, fontSize: font.size.sm }}>Mesas</Text>
                     <TextInput
@@ -239,7 +249,7 @@ export default function MesasWizardScreen() {
                 <View key={i} style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: space[2] }}>
                   <Text style={{ color: color.text }}>{z.nombre}</Text>
                   <Text style={{ color: color.textMuted }}>
-                    {z.cantidadMesas} mesas · {z.capacidad} pax · {z.forma}
+                    {z.piso} · {z.cantidadMesas} mesas · {z.capacidad} pax · {z.forma}
                   </Text>
                 </View>
               ))}
