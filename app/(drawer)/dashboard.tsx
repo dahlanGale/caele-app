@@ -1,15 +1,102 @@
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useMemo } from 'react';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { Card } from '@/src/components/ui';
+import { usePyme } from '@/src/context/PymeContext';
+import { useFirestoreCollection } from '@/src/hooks/useFirestore';
+import { layoutsCollection, ordenesCollection } from '@/src/services/firestore';
 import { useAppTheme } from '@/src/theme/ThemeProvider';
+import type { Mesa, Orden } from '@/src/types';
 
 export default function DashboardScreen() {
-  const { color, space, font } = useAppTheme();
+  const { color, space, radius, font } = useAppTheme();
+  const { pyme } = usePyme();
+  const { items: ordenes, loading: loadingOrdenes } = useFirestoreCollection(ordenesCollection);
+  const { items: layouts, loading: loadingLayouts } = useFirestoreCollection(layoutsCollection);
+
+  const today = useMemo(() => new Date().toDateString(), []);
+
+  const stats = useMemo(() => {
+    const ordenesPagadas = (ordenes as Orden[]).filter((o) => o.estado === 'pagada');
+    const ventasHoy = ordenesPagadas
+      .filter((o) => new Date(o.createdAt).toDateString() === today)
+      .reduce((acc, o) => acc + o.total, 0);
+    const abiertas = (ordenes as Orden[]).filter((o) => o.estado === 'abierta').length;
+    const totalVentas = ordenesPagadas.reduce((acc, o) => acc + o.total, 0);
+    const mesasOcupadas = layouts.reduce((acc, layout) => {
+      return acc + ((layout.mesas as Mesa[]) ?? []).filter((m) => m.estado === 'ocupada').length;
+    }, 0);
+    return { ventasHoy, abiertas, totalVentas, mesasOcupadas, ordenesCount: ordenes.length };
+  }, [ordenes, layouts, today]);
+
+  const money = (n: number) => `$${n.toFixed(2)}`;
+
   return (
-    <View style={[styles.container, { backgroundColor: color.bg, padding: space[4] }]}>
-      <Text style={[styles.title, { color: color.text, fontSize: font.size.lg }]}>Inicio</Text>
-      <Text style={{ color: color.textMuted }}>Resumenes de ventas y mesas (Próximamente).</Text>
-    </View>
+    <ScrollView style={{ flex: 1, backgroundColor: color.bg }}>
+      <View style={[styles.container, { padding: space[4] }]}>
+        <Text style={[styles.title, { color: color.text, fontSize: font.size.xl, fontWeight: font.weight.bold }]}>
+          {pyme?.nombreNegocio ?? 'Inicio'}
+        </Text>
+        <Text style={{ color: color.textMuted, marginBottom: space[4], fontSize: font.size.base }}>
+          Resumen de hoy
+        </Text>
+
+        <View style={[styles.grid, { gap: space[3], marginBottom: space[4] }]}>
+          <Card style={{ flex: 1, minWidth: 140, padding: space[4], borderRadius: radius.lg }}>
+            <Text style={{ color: color.textMuted, fontSize: font.size.sm, marginBottom: space[1] }}>Ventas hoy</Text>
+            <Text style={{ color: color.success, fontSize: font.size.xl, fontWeight: font.weight.bold }}>
+              {loadingOrdenes ? '...' : money(stats.ventasHoy)}
+            </Text>
+          </Card>
+          <Card style={{ flex: 1, minWidth: 140, padding: space[4], borderRadius: radius.lg }}>
+            <Text style={{ color: color.textMuted, fontSize: font.size.sm, marginBottom: space[1] }}>Ordenes abiertas</Text>
+            <Text style={{ color: color.warning, fontSize: font.size.xl, fontWeight: font.weight.bold }}>
+              {loadingOrdenes ? '...' : stats.abiertas}
+            </Text>
+          </Card>
+          <Card style={{ flex: 1, minWidth: 140, padding: space[4], borderRadius: radius.lg }}>
+            <Text style={{ color: color.textMuted, fontSize: font.size.sm, marginBottom: space[1] }}>Mesas ocupadas</Text>
+            <Text style={{ color: color.accent, fontSize: font.size.xl, fontWeight: font.weight.bold }}>
+              {loadingLayouts ? '...' : stats.mesasOcupadas}
+            </Text>
+          </Card>
+          <Card style={{ flex: 1, minWidth: 140, padding: space[4], borderRadius: radius.lg }}>
+            <Text style={{ color: color.textMuted, fontSize: font.size.sm, marginBottom: space[1] }}>Ventas totales</Text>
+            <Text style={{ color: color.text, fontSize: font.size.xl, fontWeight: font.weight.bold }}>
+              {loadingOrdenes ? '...' : money(stats.totalVentas)}
+            </Text>
+          </Card>
+        </View>
+
+        <Text style={[styles.sectionTitle, { color: color.text, fontSize: font.size.lg, fontWeight: font.weight.semibold, marginBottom: space[3] }]}>
+          Órdenes recientes
+        </Text>
+
+        {(ordenes as Orden[]).length === 0 ? (
+          <Card style={{ padding: space[4], borderRadius: radius.lg }}>
+            <Text style={{ color: color.textMuted, textAlign: 'center' }}>No hay órdenes registradas aún.</Text>
+          </Card>
+        ) : (
+          (ordenes as Orden[]).slice(0, 5).map((orden) => (
+            <Card key={orden.id} style={{ padding: space[3], borderRadius: radius.md, marginBottom: space[2] }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <View>
+                  <Text style={{ color: color.text, fontWeight: font.weight.semibold }}>
+                    Orden {orden.id.slice(0, 6)}
+                  </Text>
+                  <Text style={{ color: color.textMuted, fontSize: font.size.sm }}>
+                    {orden.items.length} productos · {orden.estado === 'pagada' ? 'Pagada' : 'Abierta'}
+                  </Text>
+                </View>
+                <Text style={{ color: color.text, fontWeight: font.weight.bold, fontSize: font.size.lg }}>
+                  {money(orden.total)}
+                </Text>
+              </View>
+            </Card>
+          ))
+        )}
+      </View>
+    </ScrollView>
   );
 }
 
@@ -18,7 +105,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    fontWeight: '600',
     marginBottom: 8,
+  },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  sectionTitle: {
+    marginTop: 8,
   },
 });

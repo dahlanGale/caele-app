@@ -23,6 +23,21 @@ export default function RegisterScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const mapError = (code: string) => {
+    switch (code) {
+      case 'auth/invalid-email':
+        return 'El correo no tiene un formato válido.';
+      case 'auth/weak-password':
+        return 'La contraseña es muy débil. Usa al menos 6 caracteres.';
+      case 'auth/email-already-in-use':
+        return 'Este correo ya está registrado.';
+      case 'auth/too-many-requests':
+        return 'Demasiados intentos. Intenta más tarde.';
+      default:
+        return 'No se pudo crear la cuenta. Intenta de nuevo.';
+    }
+  };
+
   const onRegister = async () => {
     setError(null);
     if (!email || !password) {
@@ -65,7 +80,7 @@ export default function RegisterScreen() {
 
       router.replace('/(drawer)/dashboard');
     } catch (e: any) {
-      setError(e?.message ?? 'No se pudo crear la cuenta');
+      setError(mapError(e?.code) ?? e?.message ?? 'No se pudo crear la cuenta');
     } finally {
       setLoading(false);
     }

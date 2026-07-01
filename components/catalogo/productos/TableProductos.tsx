@@ -3,9 +3,9 @@ import { Image } from 'expo-image';
 import React, { useMemo, useState } from 'react';
 import { Alert, FlatList, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
 
-import { EmptyState, SkeletonRow } from '@/src/components/ui';
+import { Chip, EmptyState, SkeletonRow } from '@/src/components/ui';
 import { useFirestoreCollection } from '@/src/hooks/useFirestore';
-import { productosCollection } from '@/src/services/firestore';
+import { categoriasCollection, productosCollection } from '@/src/services/firestore';
 import { useAppTheme } from '@/src/theme/ThemeProvider';
 import type { Producto } from '@/src/types';
 
@@ -15,6 +15,7 @@ const CONTENT_MAX_W = 1000;
 export default function TableProductos() {
   const { color, space, radius, font } = useAppTheme();
   const [query, setQuery] = useState('');
+  const [category, setCategory] = useState<string>('');
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const { width } = useWindowDimensions();
   const isWide = width >= 1000;
@@ -26,11 +27,26 @@ export default function TableProductos() {
   const sidePad = Math.max(0, (containerWidth - MIN_TABLE_W) / 2);
 
   const { items, loading } = useFirestoreCollection(productosCollection);
+  const { items: categories } = useFirestoreCollection(categoriasCollection);
+
+  const categoryMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const c of categories) {
+      map[c.id] = c.nombre;
+    }
+    return map;
+  }, [categories]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return items.filter((p) => !q || p.nombre.toLowerCase().includes(q));
-  }, [items, query]);
+    return items.filter((p) => {
+      const matchesQuery = !q || p.nombre.toLowerCase().includes(q);
+      const matchesCategory = !category || p.categoriaId === category;
+      return matchesQuery && matchesCategory;
+    });
+  }, [items, query, category]);
+
+  const categoryName = (id?: string) => (id ? categoryMap[id] ?? id : '-');
 
   const toggleSelect = (id: string) => setSelected((s) => ({ ...s, [id]: !s[id] }));
   const money = (n: number) => `$${n.toFixed(2)}`;
@@ -101,6 +117,27 @@ export default function TableProductos() {
           </Pressable>
         </View>
       </View>
+
+      {categories.length > 0 && (
+        <View style={{ width: '100%', maxWidth: MIN_TABLE_W, marginBottom: space[2] }}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ alignItems: 'center', paddingVertical: 2 }}
+          >
+            <Chip label="Todas" active={category === ''} onPress={() => setCategory('')} style={{ marginRight: space[2] }} />
+            {categories.map((c) => (
+              <Chip
+                key={c.id}
+                label={c.nombre}
+                active={category === c.id}
+                onPress={() => setCategory(c.id)}
+                style={{ marginRight: space[2] }}
+              />
+            ))}
+          </ScrollView>
+        </View>
+      )}
 
       <View style={{ width: '100%', maxWidth: (isWeb || isWide) ? CONTENT_MAX_W : undefined, alignSelf: (isWeb || isWide) ? 'center' : 'stretch' }}>
         <ScrollView
@@ -180,7 +217,7 @@ export default function TableProductos() {
                         </View>
                       </View>
                       <View style={[styles.cell, { flex: 2 }]}>
-                        <Text style={{ color: color.textMuted }}>{item.categoriaId ?? '-'}</Text>
+                        <Text style={{ color: color.textMuted }}>{categoryName(item.categoriaId)}</Text>
                       </View>
                       <View style={[styles.cell, { flex: 1 }]}>
                         <Text style={{ color: color.text }}>{item.stock ?? 0}</Text>

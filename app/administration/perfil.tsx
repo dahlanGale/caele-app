@@ -1,5 +1,4 @@
 import FireStoreUsuarios from '@/firebase/FirestoreUsuarios';
-import { auth } from '@/src/lib/firebase';
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, router } from 'expo-router';
 import { updateProfile } from 'firebase/auth';
@@ -17,11 +16,12 @@ import {
 
 import { Button } from '@/src/components/ui';
 import { Input } from '@/src/components/ui/Input';
+import { useAuth } from '@/src/context/AuthContext';
 import { useAppTheme } from '@/src/theme/ThemeProvider';
 
 export default function PerfilScreen() {
   const { color, space, font } = useAppTheme();
-  const user = auth.currentUser;
+  const { user } = useAuth();
 
   const [name, setName] = useState<string>(user?.displayName ?? '');
   const [email] = useState<string>(user?.email ?? '');
@@ -49,7 +49,7 @@ export default function PerfilScreen() {
       }
     };
     load();
-  }, [user?.uid]);
+  }, [user]);
 
   const onSave = async () => {
     if (!user) return;

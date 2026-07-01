@@ -1,12 +1,12 @@
 import { useEffect } from 'react';
 import { View, type ViewProps } from 'react-native';
 import Animated, {
-  Easing,
-  interpolateColor,
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withTiming,
+    Easing,
+    interpolateColor,
+    useAnimatedStyle,
+    useSharedValue,
+    withRepeat,
+    withTiming,
 } from 'react-native-reanimated';
 
 import { useAppTheme } from '@/src/theme/ThemeProvider';
@@ -33,6 +33,8 @@ export function Skeleton({ style, ...props }: ViewProps) {
 
   return (
     <Animated.View
+      accessibilityLabel="Cargando"
+      accessibilityRole="progressbar"
       style={[
         {
           borderRadius: radius.sm,

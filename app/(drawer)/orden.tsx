@@ -1,11 +1,14 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
+import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
+import { ActivityIndicator, Alert, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
 
 import { Chip } from '@/src/components/ui';
+import { usePyme } from '@/src/context/PymeContext';
 import { useFirestoreCollection } from '@/src/hooks/useFirestore';
 import { categoriasCollection, productosCollection } from '@/src/services/firestore';
+import { crearOrden, pagarOrden } from '@/src/services/ordenes';
 import { useAppTheme } from '@/src/theme/ThemeProvider';
 
 export default function OrdenScreen() {
@@ -105,6 +108,52 @@ export default function OrdenScreen() {
   }, [cart]);
 
   const itemCount = useMemo(() => Object.values(cart).reduce((acc, it) => acc + it.qty, 0), [cart]);
+
+  const { mesaId } = useLocalSearchParams<{ mesaId?: string }>();
+  const { pyme } = usePyme();
+  const [ordenId, setOrdenId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const cartItems = useMemo(
+    () =>
+      Object.values(cart).map(({ product, qty }) => ({
+        productoId: product.id,
+        nombre: product.title,
+        cantidad: qty,
+        precioUnitario: product.price,
+      })),
+    [cart]
+  );
+
+  const handleSaveOrder = async () => {
+    if (!pyme || cartItems.length === 0) return;
+    setSaving(true);
+    try {
+      const orden = await crearOrden(pyme.id, mesaId ?? 'mostrador', cartItems);
+      setOrdenId(orden.id);
+      Alert.alert('Orden guardada', `Total: ${money(orden.total)}`);
+    } catch (e: any) {
+      Alert.alert('Error', e?.message ?? 'No se pudo guardar la orden');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handlePay = async () => {
+    if (!pyme || !ordenId) return;
+    setSaving(true);
+    try {
+      await pagarOrden(pyme.id, ordenId, 'default', mesaId ?? 'mostrador');
+      Alert.alert('Pago completado', 'La orden fue pagada y la mesa liberada.');
+      setCart({});
+      setOrdenId(null);
+      if (mesaId) router.back();
+    } catch (e: any) {
+      Alert.alert('Error', e?.message ?? 'No se pudo procesar el pago');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: color.bg, padding: space[4] }]}>
@@ -296,22 +345,26 @@ export default function OrdenScreen() {
                 <Row label="Total" value={money(total)} bold color={color.text} />
               </View>
 
-              <Pressable
-                onPress={() => Alert.alert('Pago', 'Continuar al flujo de pago...')}
-                disabled={total <= 0}
-                style={[
-                  styles.payBtn,
-                  {
-                    backgroundColor: total > 0 ? color.accent : color.borderSubtle,
-                    borderRadius: radius.md,
-                    marginTop: space[3],
-                  },
-                ]}
-              >
-                <Text style={{ color: total > 0 ? color.textInverse : color.textMuted, fontWeight: font.weight.bold }}>
-                  Continuar al pago
-                </Text>
-              </Pressable>
+              {saving ? (
+                <ActivityIndicator color={color.accent} style={{ marginTop: space[3] }} />
+              ) : (
+                <Pressable
+                  onPress={ordenId ? handlePay : handleSaveOrder}
+                  disabled={total <= 0 || saving}
+                  style={[
+                    styles.payBtn,
+                    {
+                      backgroundColor: total > 0 ? color.accent : color.borderSubtle,
+                      borderRadius: radius.md,
+                      marginTop: space[3],
+                    },
+                  ]}
+                >
+                  <Text style={{ color: total > 0 ? color.textInverse : color.textMuted, fontWeight: font.weight.bold }}>
+                    {ordenId ? 'Pagar' : 'Guardar orden'}
+                  </Text>
+                </Pressable>
+              )}
             </View>
           </View>
         )}
@@ -416,22 +469,26 @@ export default function OrdenScreen() {
                   <Row label="Total" value={money(total)} bold color={color.text} />
                 </View>
 
-                <Pressable
-                  onPress={() => Alert.alert('Pago', 'Continuar al flujo de pago...')}
-                  disabled={total <= 0}
-                  style={[
-                    styles.payBtn,
-                    {
-                      backgroundColor: total > 0 ? color.accent : color.borderSubtle,
-                      borderRadius: radius.md,
-                      marginTop: space[3],
-                    },
-                  ]}
-                >
-                  <Text style={{ color: total > 0 ? color.textInverse : color.textMuted, fontWeight: font.weight.bold }}>
-                    Continuar al pago
-                  </Text>
-                </Pressable>
+                {saving ? (
+                  <ActivityIndicator color={color.accent} style={{ marginTop: space[3] }} />
+                ) : (
+                  <Pressable
+                    onPress={ordenId ? handlePay : handleSaveOrder}
+                    disabled={total <= 0 || saving}
+                    style={[
+                      styles.payBtn,
+                      {
+                        backgroundColor: total > 0 ? color.accent : color.borderSubtle,
+                        borderRadius: radius.md,
+                        marginTop: space[3],
+                      },
+                    ]}
+                  >
+                    <Text style={{ color: total > 0 ? color.textInverse : color.textMuted, fontWeight: font.weight.bold }}>
+                      {ordenId ? 'Pagar' : 'Guardar orden'}
+                    </Text>
+                  </Pressable>
+                )}
               </View>
             </View>
           </Modal>

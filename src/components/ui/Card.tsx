@@ -2,11 +2,13 @@ import { StyleSheet, View, type ViewProps } from 'react-native';
 
 import { useAppTheme } from '@/src/theme/ThemeProvider';
 
-export function Card({ children, style, ...props }: ViewProps) {
+export function Card({ children, style, accessibilityLabel, ...props }: ViewProps & { accessibilityLabel?: string }) {
   const { color, radius, shadow, space } = useAppTheme();
 
   return (
     <View
+      accessibilityLabel={accessibilityLabel}
+      accessibilityRole="none"
       style={[
         styles.card,
         {

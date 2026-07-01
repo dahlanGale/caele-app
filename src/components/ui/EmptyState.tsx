@@ -20,8 +20,8 @@ export function EmptyState({
   const iconColor = variant === 'error' ? color.danger : color.textMuted;
 
   return (
-    <View style={styles.container}>
-      <MaterialCommunityIcons name={icon as any} size={48} color={iconColor} />
+    <View style={styles.container} accessibilityRole="alert" accessibilityLabel={`${title}${subtitle ? `. ${subtitle}` : ''}`}>
+      <MaterialCommunityIcons name={icon as any} size={48} color={iconColor} accessibilityElementsHidden />
       <Text
         style={[
           styles.title,

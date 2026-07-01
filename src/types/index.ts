@@ -43,6 +43,7 @@ export type Mesa = {
   label?: string;
   shape?: 'circle' | 'rect';
   capacidad?: number;
+  estado?: 'libre' | 'ocupada' | 'cuenta';
 };
 
 export type LayoutMesas = {

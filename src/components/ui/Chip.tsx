@@ -20,6 +20,9 @@ export function Chip({ label, active, style, ...props }: ChipProps) {
 
   return (
     <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ selected: !!active }}
       style={({ pressed }) => {
         const base = {
           backgroundColor: active ? color.accent : color.accentSoft,

@@ -35,14 +35,35 @@ export default function LoginScreen() {
     scopes: ['openid', 'profile', 'email'],
   });
 
+  const mapError = (code: string) => {
+    switch (code) {
+      case 'auth/invalid-email':
+        return 'El correo no tiene un formato válido.';
+      case 'auth/user-disabled':
+        return 'Esta cuenta ha sido deshabilitada.';
+      case 'auth/user-not-found':
+      case 'auth/invalid-credential':
+      case 'auth/wrong-password':
+        return 'Correo o contraseña incorrectos.';
+      case 'auth/too-many-requests':
+        return 'Demasiados intentos. Intenta más tarde.';
+      default:
+        return 'Error al iniciar sesión. Intenta de nuevo.';
+    }
+  };
+
   const onLogin = async () => {
     setError(null);
+    if (!email.trim() || !password) {
+      setError('Completa correo y contraseña.');
+      return;
+    }
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email.trim(), password);
       router.replace('/(drawer)/dashboard');
     } catch (e: any) {
-      setError(e?.message ?? 'Error al iniciar sesión');
+      setError(mapError(e?.code) ?? e?.message ?? 'Error al iniciar sesión');
     } finally {
       setLoading(false);
     }

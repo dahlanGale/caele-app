@@ -25,6 +25,7 @@ export function Input({ icon, style, ...props }: InputProps) {
       {icon}
       <TextInput
         placeholderTextColor={color.textMuted}
+        accessibilityLabel={props.placeholder}
         style={[
           styles.input,
           {
