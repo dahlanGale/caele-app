@@ -85,26 +85,48 @@ export default function MesasWizardScreen() {
   };
 
   const generar = async () => {
+    console.log('[wizard] generar iniciado');
     if (!pyme) {
+      console.log('[wizard] no hay pyme');
       Alert.alert('Error', 'No hay una sesión activa.');
       return;
     }
+    if (!pyme.id) {
+      console.log('[wizard] pyme sin id', pyme);
+      Alert.alert('Error', 'No se encontró el ID del restaurante.');
+      return;
+    }
     if (pisos.length === 0) {
+      console.log('[wizard] no hay pisos');
       Alert.alert('Agrega al menos un piso');
       return;
     }
     if (zonas.length === 0) {
+      console.log('[wizard] no hay zonas');
       Alert.alert('Agrega al menos una zona');
       return;
     }
     setLoading(true);
+    Alert.alert('Generando', `Creando ${zonas.length} zonas en ${pisos.length} pisos...`);
     try {
+      console.log('[wizard] guardando nombreNegocio', pyme.id);
       await pymeCollection.set(pyme.id, pyme.id, { nombreNegocio });
-      await Promise.all(
-        zonas.map((z, i) => crearZona(pyme.id, z.nombre, z.piso, i, z))
-      );
+      console.log('[wizard] nombreNegocio guardado');
+      for (let i = 0; i < zonas.length; i++) {
+        const z = zonas[i];
+        console.log('[wizard] creando zona', i, z.nombre, z.piso);
+        try {
+          await crearZona(pyme.id, z.nombre, z.piso, i, z);
+          console.log('[wizard] zona creada', i);
+        } catch (zoneErr: any) {
+          console.error('[wizard] error creando zona', i, zoneErr);
+          throw new Error(`Error creando zona ${z.nombre}: ${zoneErr?.message ?? 'desconocido'}`);
+        }
+      }
+      console.log('[wizard] todas las zonas creadas, navegando');
       router.replace('/(drawer)/mesas');
     } catch (e: any) {
+      console.error('[wizard] error generar', e);
       Alert.alert('Error', e?.message ?? 'No se pudo generar la distribución');
     } finally {
       setLoading(false);
