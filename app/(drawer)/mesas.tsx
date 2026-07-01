@@ -3,10 +3,12 @@ import { LayoutChangeEvent, Pressable, StyleSheet, Text, View } from 'react-nati
 import 'react-native-gesture-handler';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
-  runOnJS,
-  useAnimatedStyle,
-  useSharedValue,
+    runOnJS,
+    useAnimatedStyle,
+    useSharedValue,
 } from 'react-native-reanimated';
+
+import { themes } from '@/src/theme/tokens';
 import FirestoreRestaurante from '../../firebase/FirestoreRestaurante';
 
 type TableItem = {
@@ -230,23 +232,25 @@ function GridBackground() {
   );
 }
 
+const dark = themes.dark;
+
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#0b0d12' },
+  screen: { flex: 1, backgroundColor: dark.bg },
   toolbar: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,
     padding: 12,
-    backgroundColor: '#12151c',
+    backgroundColor: dark.bgElevated,
   },
   btn: {
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 10,
-    backgroundColor: '#233047',
+    backgroundColor: dark.bgSubtle,
   },
-  btnActive: { backgroundColor: '#2f6fed' },
-  btnText: { color: 'white', fontWeight: '600' },
+  btnActive: { backgroundColor: dark.accent },
+  btnText: { color: dark.textInverse, fontWeight: '600' },
 
   canvasWrapper: { flex: 1, overflow: 'hidden' },
   canvasContent: { width: '100%', height: '100%' },
@@ -256,14 +260,14 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     width: 1,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: dark.borderSubtle,
   },
   gridLineH: {
     position: 'absolute',
     left: 0,
     right: 0,
     height: 1,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: dark.borderSubtle,
   },
 
   tableCircle: {
@@ -272,10 +276,10 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#39b8ff',
+    backgroundColor: dark.accent,
     borderWidth: 2,
-    borderColor: '#0b0d12',
+    borderColor: dark.bg,
     elevation: 4,
   },
-  tableLabel: { color: '#0b0d12', fontWeight: '700' },
+  tableLabel: { color: dark.textInverse, fontWeight: '700' },
 });

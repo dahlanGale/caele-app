@@ -8,8 +8,12 @@ import { signOut } from 'firebase/auth';
 import React from 'react';
 import { View } from 'react-native';
 
+import { useAppTheme } from '@/src/theme/ThemeProvider';
+
+
 function CustomDrawerContent(props: any) {
-  const { colors, dark } = useTheme();
+  const { colors } = useTheme();
+  const { color } = useAppTheme();
   return (
     <DrawerContentScrollView {...props} contentContainerStyle={{ flex: 1 }}>
       <DrawerItemList {...props} />
@@ -21,7 +25,7 @@ function CustomDrawerContent(props: any) {
         icon={({ size, color }) => (
           <MaterialCommunityIcons name="cog" size={size} color={color} />
         )}
-        style={{ marginTop: 8, borderTopWidth: dark ? 0 : 1, borderColor: dark ? 'rgba(255,255,255,0.08)' : '#E5E7EB' }}
+        style={{ marginTop: 8, borderTopWidth: 1, borderColor: color.border }}
       />
       <DrawerItem
         label="Cerrar sesión"
@@ -36,7 +40,7 @@ function CustomDrawerContent(props: any) {
         icon={({ size, color }) => (
           <MaterialCommunityIcons name="logout" size={size} color={colors.text} />
         )}
-        style={{ marginTop: 8, borderTopWidth: dark ? 0 : 1, borderColor: dark ? 'rgba(255,255,255,0.08)' : '#E5E7EB' }}
+        style={{ marginTop: 8, borderTopWidth: 1, borderColor: color.border }}
       />
     </DrawerContentScrollView>
   );
@@ -44,6 +48,7 @@ function CustomDrawerContent(props: any) {
 
 export default function DrawerLayout() {
   const { colors, dark } = useTheme();
+  const { color } = useAppTheme();
 
   return (
     <Drawer
@@ -58,11 +63,11 @@ export default function DrawerLayout() {
         // Drawer panel
         drawerStyle: { width: 280 },
         drawerContentStyle: { backgroundColor: colors.card },
-        drawerActiveBackgroundColor: dark ? 'rgba(255,255,255,0.08)' : '#E2E8F0',
+        drawerActiveBackgroundColor: dark ? color.borderSubtle : color.bgSubtle,
         drawerActiveTintColor: colors.text,
-        drawerInactiveTintColor: dark ? '#CBD5E1' : '#475569',
+        drawerInactiveTintColor: color.textMuted,
         drawerLabelStyle: { fontSize: 15 },
-        overlayColor: dark ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.15)'
+        overlayColor: color.overlay,
       }}
       drawerContent={(props) => <CustomDrawerContent {...props} />}
     >

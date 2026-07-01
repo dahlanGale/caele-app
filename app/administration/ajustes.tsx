@@ -1,33 +1,33 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useTheme } from '@react-navigation/native';
 import { router, Stack } from 'expo-router';
 import React from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { useAppTheme } from '@/src/theme/ThemeProvider';
+
 export default function AjustesScreen() {
-  const { colors } = useTheme();
+  const { color, space, radius, font } = useAppTheme();
 
   return (
     <>
       <Stack.Screen options={{ title: 'Ajustes' }} />
-      <ScrollView style={{ flex: 1, backgroundColor: colors.background }} contentContainerStyle={styles.content}>
-
-        {/* Perfil */}
-        <Section title="Perfil" colors={colors}>
+      <ScrollView
+        style={{ flex: 1, backgroundColor: color.bg }}
+        contentContainerStyle={styles.content}
+      >
+        <Section title="Perfil">
           <Row label="Tu perfil" onPress={() => router.push('/administration/perfil')} />
           <Row label="Etiquetas guardadas" onPress={() => {}} />
           <Row label="Tarjetas guardadas" onPress={() => {}} />
           <Row label="Notificaciones y correos" onPress={() => {}} isLast />
         </Section>
 
-        {/* Privacidad y seguridad */}
-        <Section title="Privacidad y seguridad" colors={colors}>
+        <Section title="Privacidad y seguridad">
           <Row label="Contraseña de la aplicación" onPress={() => {}} />
           <Row label="Verificación OTP" onPress={() => {}} isLast />
         </Section>
 
-        {/* Soporte */}
-        <Section title="Soporte" colors={colors}>
+        <Section title="Soporte">
           <Row label="Contactar soporte" onPress={() => {}} />
           <Row label="Acerca de" onPress={() => {}} />
           <Row label="Legal" onPress={() => {}} isLast />
@@ -35,33 +35,41 @@ export default function AjustesScreen() {
       </ScrollView>
     </>
   );
-}
 
-function Section({ title, children, colors }: { title: string; children: React.ReactNode; colors: any }) {
-  return (
-    <View style={styles.section}>
-      <Text style={[styles.sectionTitle, { color: colors.text }]}>{title}</Text>
-      <View style={[styles.group, { backgroundColor: colors.card, borderColor: colors.border }]}>{children}</View>
-    </View>
-  );
-}
+  function Section({ title, children }: { title: string; children: React.ReactNode }) {
+    return (
+      <View style={[styles.section, { marginTop: space[3] }]}>
+        <Text style={[styles.sectionTitle, { color: color.textMuted, fontSize: font.size.xs, marginBottom: space[2] }]}>
+          {title}
+        </Text>
+        <View
+          style={[
+            styles.group,
+            { backgroundColor: color.bgElevated, borderColor: color.border, borderRadius: radius.md },
+          ]}
+        >
+          {children}
+        </View>
+      </View>
+    );
+  }
 
-function Row({ label, onPress, isLast }: { label: string; onPress: () => void; isLast?: boolean }) {
-  const { colors } = useTheme();
-  return (
-    <Pressable
-      onPress={onPress}
-      android_ripple={{ color: 'rgba(0,0,0,0.06)' }}
-      style={({ pressed }) => [
-        styles.row,
-        !isLast && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
-        pressed && { opacity: 0.9 },
-      ]}
-    >
-      <Text style={[styles.rowLabel, { color: colors.text }]}>{label}</Text>
-      <MaterialCommunityIcons name="chevron-right" size={22} color={colors.text} />
-    </Pressable>
-  );
+  function Row({ label, onPress, isLast }: { label: string; onPress: () => void; isLast?: boolean }) {
+    return (
+      <Pressable
+        onPress={onPress}
+        android_ripple={{ color: color.overlay }}
+        style={({ pressed }) => [
+          styles.row,
+          !isLast && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: color.border },
+          pressed && { opacity: 0.9 },
+        ]}
+      >
+        <Text style={[styles.rowLabel, { color: color.text, fontSize: font.size.base }]}>{label}</Text>
+        <MaterialCommunityIcons name="chevron-right" size={22} color={color.text} />
+      </Pressable>
+    );
+  }
 }
 
 const styles = StyleSheet.create({
@@ -69,24 +77,13 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 32,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    marginBottom: 12,
-  },
-  section: {
-    marginTop: 12,
-  },
+  section: {},
   sectionTitle: {
-    fontSize: 12,
     fontWeight: '600',
-    opacity: 0.7,
-    marginBottom: 8,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   group: {
-    borderRadius: 12,
     overflow: 'hidden',
     borderWidth: StyleSheet.hairlineWidth,
   },
@@ -98,7 +95,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   rowLabel: {
-    fontSize: 16,
     fontWeight: '500',
   },
 });

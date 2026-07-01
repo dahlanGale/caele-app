@@ -1,25 +1,19 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useTheme } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
 
+import { Chip } from '@/src/components/ui';
+import { useAppTheme } from '@/src/theme/ThemeProvider';
+
 export default function OrdenScreen() {
-  const { colors, dark } = useTheme();
+  const { color, space, radius, font, shadow } = useAppTheme();
   const { width } = useWindowDimensions();
 
-  // Responsive layout breakpoints
-  const isWide = width >= 1000; // muestra panel lateral
+  const isWide = width >= 1000;
   const gridCols = width >= 1280 ? 3 : width >= 760 ? 2 : 1;
+  const chipSpacing = Platform.OS === 'web' || isWide ? 8 : 10;
 
-  // Theming helpers (mejoran contraste de chips y botón Filtros)
-  const chipInactiveBg = dark ? 'rgba(148,163,184,0.16)' : 'rgba(15,23,42,0.06)';
-  const chipInactiveBorder = dark ? 'rgba(148,163,184,0.35)' : '#E5E7EB';
-  const pressedBg = dark ? 'rgba(249,115,22,0.22)' : 'rgba(249,115,22,0.14)';
-  // Spacing de chips: menos separación en web, un poco más en móvil
-  const chipSpacing = (Platform.OS === 'web' || isWide) ? 8 : 10;
-
-  // UI state
   const [query, setQuery] = useState('');
   const CATEGORIES = ['Signature', 'Croissant', 'Waffle', 'Coffee', 'Ice Cream'] as const;
   type Category = typeof CATEGORIES[number];
@@ -36,65 +30,66 @@ export default function OrdenScreen() {
     image: string;
   };
 
-  // Sample products (placeholder images)
-  const PRODUCTS: Product[] = [
-    {
-      id: 'p1',
-      title: 'Almond Brown Sugar Croissant',
-      description: 'Sweet croissant with topping almonds and brown sugar',
-      price: 12.98,
-      pack: '3 pcs',
-      category: 'Croissant',
-      image: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?q=80&w=1200&auto=format&fit=crop',
-    },
-    {
-      id: 'p2',
-      title: 'Smoke Tenderloin Slice Croissant',
-      description: 'Plain croissant with smoke tenderloin beef and veggies',
-      price: 10.01,
-      pack: '2 pcs',
-      category: 'Croissant',
-      image: 'https://images.unsplash.com/photo-1549934159-9157c3fdaf29?q=80&w=1200&auto=format&fit=crop',
-    },
-    {
-      id: 'p3',
-      title: 'Berry Whipped Cream Croissant',
-      description: 'Sweet croissant with blueberries and strawberries',
-      price: 8.92,
-      pack: '3 pcs',
-      category: 'Croissant',
-      image: 'https://images.unsplash.com/photo-1505826759031-7b68b38ad75b?q=80&w=1200&auto=format&fit=crop',
-    },
-    {
-      id: 'p4',
-      title: 'Sweet Granulated Sugar Croissant',
-      description: 'Classic croissant dusted with sugar',
-      price: 5.58,
-      pack: '1 pc',
-      category: 'Croissant',
-      image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=1200&auto=format&fit=crop',
-    },
-    {
-      id: 'p5',
-      title: 'Sweet Chocolate Chocochips Croissant',
-      description: 'Croissant filled with chocolate and chocochips',
-      price: 22.02,
-      pack: '2 pcs',
-      category: 'Croissant',
-      image: 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?q=80&w=1200&auto=format&fit=crop',
-    },
-    {
-      id: 'p6',
-      title: 'Basic Croissant La Ta Dhore',
-      description: 'Buttery basic croissant',
-      price: 4.75,
-      pack: '1 pc',
-      category: 'Croissant',
-      image: 'https://images.unsplash.com/photo-1542831371-29b0f74f9713?q=80&w=1200&auto=format&fit=crop',
-    },
-  ];
+  const PRODUCTS: Product[] = useMemo(
+    () => [
+      {
+        id: 'p1',
+        title: 'Almond Brown Sugar Croissant',
+        description: 'Sweet croissant with topping almonds and brown sugar',
+        price: 12.98,
+        pack: '3 pcs',
+        category: 'Croissant',
+        image: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?q=80&w=1200&auto=format&fit=crop',
+      },
+      {
+        id: 'p2',
+        title: 'Smoke Tenderloin Slice Croissant',
+        description: 'Plain croissant with smoke tenderloin beef and veggies',
+        price: 10.01,
+        pack: '2 pcs',
+        category: 'Croissant',
+        image: 'https://images.unsplash.com/photo-1549934159-9157c3fdaf29?q=80&w=1200&auto=format&fit=crop',
+      },
+      {
+        id: 'p3',
+        title: 'Berry Whipped Cream Croissant',
+        description: 'Sweet croissant with blueberries and strawberries',
+        price: 8.92,
+        pack: '3 pcs',
+        category: 'Croissant',
+        image: 'https://images.unsplash.com/photo-1505826759031-7b68b38ad75b?q=80&w=1200&auto=format&fit=crop',
+      },
+      {
+        id: 'p4',
+        title: 'Sweet Granulated Sugar Croissant',
+        description: 'Classic croissant dusted with sugar',
+        price: 5.58,
+        pack: '1 pc',
+        category: 'Croissant',
+        image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=1200&auto=format&fit=crop',
+      },
+      {
+        id: 'p5',
+        title: 'Sweet Chocolate Chocochips Croissant',
+        description: 'Croissant filled with chocolate and chocochips',
+        price: 22.02,
+        pack: '2 pcs',
+        category: 'Croissant',
+        image: 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?q=80&w=1200&auto=format&fit=crop',
+      },
+      {
+        id: 'p6',
+        title: 'Basic Croissant La Ta Dhore',
+        description: 'Buttery basic croissant',
+        price: 4.75,
+        pack: '1 pc',
+        category: 'Croissant',
+        image: 'https://images.unsplash.com/photo-1542831371-29b0f74f9713?q=80&w=1200&auto=format&fit=crop',
+      },
+    ],
+    []
+  );
 
-  // Asegura que la categoría inicial tenga productos (se ejecuta después del primer render)
   useEffect(() => {
     const firstWithItems = CATEGORIES.find((c) => PRODUCTS.some((p) => p.category === c));
     if (firstWithItems && firstWithItems !== category) {
@@ -103,8 +98,7 @@ export default function OrdenScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Cart state
-  type CartState = Record<string, { qty: number; product: Product }>; // by product id
+  type CartState = Record<string, { qty: number; product: Product }>;
   const [cart, setCart] = useState<CartState>({});
 
   const addToCart = (p: Product) => {
@@ -142,7 +136,7 @@ export default function OrdenScreen() {
 
   const { subtotal, discount, tax, total } = useMemo(() => {
     const sub = Object.values(cart).reduce((acc, it) => acc + it.product.price * it.qty, 0);
-    const disc = sub > 0 ? 5 : 0; // ejemplo
+    const disc = sub > 0 ? 5 : 0;
     const taxRate = 0.06;
     const taxVal = (sub - disc) * taxRate;
     const tot = Math.max(0, sub - disc + taxVal);
@@ -152,35 +146,45 @@ export default function OrdenScreen() {
   const itemCount = useMemo(() => Object.values(cart).reduce((acc, it) => acc + it.qty, 0), [cart]);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Main content wrapper */}
-      <View style={[styles.content, { flexDirection: isWide ? 'row' : 'column', gap: isWide ? 24 : 12 }]}>
+    <View style={[styles.container, { backgroundColor: color.bg, padding: space[4] }]}>
+      <View style={[styles.content, { flexDirection: isWide ? 'row' : 'column', gap: isWide ? space[6] : space[3] }]}>
         {/* Left: products area */}
         <View style={{ flex: 1 }}>
-          {/* Greeting and search */}
-          <View style={{ marginBottom: 12 }}>
-            <View style={[styles.searchWrap, { backgroundColor: colors.card, borderColor: dark ? 'rgba(255,255,255,0.08)' : '#E5E7EB' }]}>
-              <MaterialCommunityIcons name="magnify" size={20} color={colors.text} style={{ opacity: 0.7 }} />
+          {/* Search */}
+          <View style={{ marginBottom: space[3] }}>
+            <View
+              style={[
+                styles.searchWrap,
+                {
+                  backgroundColor: color.bgElevated,
+                  borderColor: color.border,
+                  borderRadius: radius.md,
+                  paddingHorizontal: space[3],
+                  paddingVertical: space[3],
+                },
+              ]}
+            >
+              <MaterialCommunityIcons name="magnify" size={20} color={color.textMuted} />
               <TextInput
                 placeholder="Buscar producto..."
-                placeholderTextColor={dark ? '#94A3B8' : '#94A3B8'}
+                placeholderTextColor={color.textMuted}
                 value={query}
                 onChangeText={setQuery}
-                style={[styles.input, { color: colors.text }]}
+                style={[styles.input, { color: color.text, fontSize: font.size.base }]}
               />
               <Pressable
                 onPress={() => Alert.alert('Filtros', 'Aquí puedes abrir filtros avanzados.')}
-                android_ripple={{ color: 'rgba(249,115,22,0.2)' }}
+                android_ripple={{ color: color.accentSoft }}
                 style={({ pressed }) => [
                   styles.filterBtn,
                   {
-                    backgroundColor: pressed ? pressedBg : chipInactiveBg,
-                    borderColor: chipInactiveBorder,
-                    borderWidth: 1,
+                    backgroundColor: pressed ? color.accentSoft : color.bgSubtle,
+                    borderColor: color.border,
+                    borderRadius: radius.md,
                   },
                 ]}
               >
-                <MaterialCommunityIcons name="tune" size={20} color={colors.text} />
+                <MaterialCommunityIcons name="tune" size={20} color={color.text} />
               </Pressable>
             </View>
           </View>
@@ -189,52 +193,65 @@ export default function OrdenScreen() {
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            style={{ marginBottom: 16, width: '100%' }}
+            style={{ marginBottom: space[4], width: '100%' }}
             contentContainerStyle={{ alignItems: 'center', paddingVertical: 2, paddingHorizontal: 2 }}
           >
-            {CATEGORIES.map((c, i) => {
-              const active = c === category;
-              return (
-                <Pressable
-                  key={c}
-                  onPress={() => setCategory(c)}
-                  hitSlop={8}
-                  style={[styles.chip, active && { backgroundColor: '#F97316' }, i < CATEGORIES.length - 1 && { marginRight: chipSpacing }]}
-                >
-                  <Text style={[styles.chipText, { color: active ? '#fff' : colors.text }]}>{c}</Text>
-                </Pressable>
-              );
-            })}
+            {CATEGORIES.map((c, i) => (
+              <Chip
+                key={c}
+                label={c}
+                active={c === category}
+                onPress={() => setCategory(c)}
+                style={i < CATEGORIES.length - 1 ? { marginRight: chipSpacing } : undefined}
+              />
+            ))}
           </ScrollView>
 
           {/* Product grid */}
-          <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -8 }}>
+          <ScrollView contentContainerStyle={{ paddingBottom: space[6] }}>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -space[2] }}>
               {filtered.length === 0 ? (
-                <Text style={{ color: colors.text, opacity: 0.7, paddingHorizontal: 8 }}>
+                <Text style={{ color: color.text, opacity: 0.7, paddingHorizontal: space[2] }}>
                   No hay productos en esta categoría
                 </Text>
               ) : (
                 filtered.map((p) => (
-                  <View key={p.id} style={{ width: `${100 / gridCols}%`, paddingHorizontal: 8, marginBottom: 16 }}>
-                    <View style={[styles.card, { backgroundColor: colors.card, borderColor: dark ? 'rgba(255,255,255,0.08)' : '#E5E7EB' }]}>
+                  <View key={p.id} style={{ width: `${100 / gridCols}%`, paddingHorizontal: space[2], marginBottom: space[4] }}>
+                    <View
+                      style={[
+                        styles.card,
+                        {
+                          backgroundColor: color.bgElevated,
+                          borderColor: color.border,
+                          borderRadius: radius.md,
+                          padding: space[3],
+                        },
+                      ]}
+                    >
                       <Image
                         source={{ uri: p.image }}
-                        style={{ width: '100%', height: 140, borderRadius: 8 }}
+                        style={{ width: '100%', height: 140, borderRadius: radius.sm }}
                         contentFit="cover"
                       />
-                      <View style={{ marginTop: 10 }}>
-                        <Text numberOfLines={2} style={[styles.cardTitle, { color: colors.text }]}>{p.title}</Text>
-                        <Text numberOfLines={2} style={{ color: colors.text, opacity: 0.7, marginTop: 4 }}>{p.description}</Text>
+                      <View style={{ marginTop: space[3] }}>
+                        <Text numberOfLines={2} style={[styles.cardTitle, { color: color.text, fontSize: font.size.base }]}>
+                          {p.title}
+                        </Text>
+                        <Text numberOfLines={2} style={{ color: color.textMuted, marginTop: space[1], fontSize: font.size.sm }}>
+                          {p.description}
+                        </Text>
                       </View>
 
-                      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: space[3] }}>
                         <View>
-                          <Text style={[styles.price, { color: '#F97316' }]}>{money(p.price)}</Text>
-                          <Text style={{ color: colors.text, opacity: 0.6, fontSize: 12 }}>{p.pack}</Text>
+                          <Text style={[styles.price, { color: color.accent, fontSize: font.size.md }]}>{money(p.price)}</Text>
+                          <Text style={{ color: color.textMuted, fontSize: font.size.xs }}>{p.pack}</Text>
                         </View>
-                        <Pressable onPress={() => addToCart(p)} style={[styles.addBtn, { backgroundColor: dark ? '#F97316' : '#F97316' }]}>
-                          <MaterialCommunityIcons name="cart-plus" size={18} color="#fff" />
+                        <Pressable
+                          onPress={() => addToCart(p)}
+                          style={[styles.addBtn, { backgroundColor: color.accent, borderRadius: radius.sm }]}
+                        >
+                          <MaterialCommunityIcons name="cart-plus" size={18} color={color.textInverse} />
                         </Pressable>
                       </View>
                     </View>
@@ -245,133 +262,214 @@ export default function OrdenScreen() {
           </ScrollView>
         </View>
 
-        {/* Right: cart panel sólo en pantallas anchas */}
+        {/* Right: cart panel wide */}
         {isWide && (
           <View style={[styles.cartContainer, { width: 340 }]}>
-            <View style={[styles.cartPanel, { backgroundColor: colors.card, borderColor: dark ? 'rgba(255,255,255,0.08)' : '#E5E7EB' }]}>
+            <View
+              style={[
+                styles.cartPanel,
+                {
+                  backgroundColor: color.bgElevated,
+                  borderColor: color.border,
+                  borderRadius: radius.lg,
+                  padding: space[4],
+                },
+              ]}
+            >
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Text style={[styles.cartTitle, { color: colors.text }]}>Orden actual</Text>
+                <Text style={[styles.cartTitle, { color: color.text, fontSize: font.size.md }]}>Orden actual</Text>
                 <Pressable onPress={() => Alert.alert('Opciones', 'Ajustes del carrito próximamente.')}>
-                  <MaterialCommunityIcons name="cog-outline" size={20} color={colors.text} />
+                  <MaterialCommunityIcons name="cog-outline" size={20} color={color.text} />
                 </Pressable>
               </View>
 
-              {/* Items */}
-              <View style={{ marginTop: 12 }}>
+              <View style={{ marginTop: space[3] }}>
                 {Object.values(cart).length === 0 ? (
-                  <Text style={{ color: colors.text, opacity: 0.7 }}>No hay productos en el carrito</Text>
+                  <Text style={{ color: color.textMuted }}>No hay productos en el carrito</Text>
                 ) : (
                   Object.values(cart).map(({ product, qty }) => (
-                    <View key={product.id} style={[styles.cartItem, { borderColor: dark ? 'rgba(255,255,255,0.08)' : '#E5E7EB' }]}>
+                    <View
+                      key={product.id}
+                      style={[styles.cartItem, { borderColor: color.border }]}
+                    >
                       <Image source={{ uri: product.image }} style={styles.cartThumb} contentFit="cover" />
-                      <View style={{ flex: 1, marginHorizontal: 8 }}>
-                        <Text numberOfLines={1} style={{ color: colors.text, fontWeight: '600' }}>{product.title}</Text>
-                        <Text style={{ color: '#F97316', marginTop: 2 }}>{money(product.price)}</Text>
+                      <View style={{ flex: 1, marginHorizontal: space[2] }}>
+                        <Text numberOfLines={1} style={{ color: color.text, fontWeight: font.weight.semibold }}>
+                          {product.title}
+                        </Text>
+                        <Text style={{ color: color.accent, marginTop: 2 }}>{money(product.price)}</Text>
                       </View>
-                      <View style={styles.stepper}>
+                      <View style={[styles.stepper, { backgroundColor: color.accent, borderRadius: radius.full }]}>
                         <Pressable onPress={() => dec(product.id)} style={styles.stepBtn}>
-                          <MaterialCommunityIcons name="minus" size={16} color="#fff" />
+                          <MaterialCommunityIcons name="minus" size={16} color={color.textInverse} />
                         </Pressable>
-                        <Text style={{ width: 22, textAlign: 'center', color: colors.text }}>{qty}</Text>
+                        <Text style={{ width: 22, textAlign: 'center', color: color.textInverse }}>{qty}</Text>
                         <Pressable onPress={() => inc(product.id)} style={styles.stepBtn}>
-                          <MaterialCommunityIcons name="plus" size={16} color="#fff" />
+                          <MaterialCommunityIcons name="plus" size={16} color={color.textInverse} />
                         </Pressable>
                       </View>
                       <Pressable onPress={() => removeItem(product.id)} style={{ padding: 6, marginLeft: 4 }}>
-                        <MaterialCommunityIcons name="trash-can-outline" size={18} color={dark ? '#FCA5A5' : '#DC2626'} />
+                        <MaterialCommunityIcons name="trash-can-outline" size={18} color={color.danger} />
                       </Pressable>
                     </View>
                   ))
                 )}
               </View>
 
-              {/* Totals */}
-              <View style={[styles.summaryBox, { backgroundColor: dark ? 'rgba(255,255,255,0.02)' : '#F8FAFC', borderColor: dark ? 'rgba(255,255,255,0.06)' : '#E5E7EB' }]}>
-                <Row label="Subtotal" value={money(subtotal)} colors={colors} />
-                <Row label="Descuento" value={`-${money(discount)}`} colors={colors} />
-                <Row label="Impuestos" value={money(tax)} colors={colors} />
-                <View style={{ height: 1, backgroundColor: dark ? 'rgba(255,255,255,0.08)' : '#E5E7EB', marginVertical: 8 }} />
-                <Row label="Total" value={money(total)} bold colors={colors} />
+              <View
+                style={[
+                  styles.summaryBox,
+                  {
+                    backgroundColor: color.bgSubtle,
+                    borderColor: color.border,
+                    borderRadius: radius.md,
+                    padding: space[3],
+                    marginTop: space[3],
+                  },
+                ]}
+              >
+                <Row label="Subtotal" value={money(subtotal)} color={color.text} />
+                <Row label="Descuento" value={`-${money(discount)}`} color={color.text} />
+                <Row label="Impuestos" value={money(tax)} color={color.text} />
+                <View style={{ height: 1, backgroundColor: color.border, marginVertical: space[2] }} />
+                <Row label="Total" value={money(total)} bold color={color.text} />
               </View>
 
               <Pressable
                 onPress={() => Alert.alert('Pago', 'Continuar al flujo de pago...')}
                 disabled={total <= 0}
-                style={[styles.payBtn, { backgroundColor: total > 0 ? '#F97316' : (dark ? 'rgba(255,255,255,0.08)' : '#E5E7EB') }]}
+                style={[
+                  styles.payBtn,
+                  {
+                    backgroundColor: total > 0 ? color.accent : color.borderSubtle,
+                    borderRadius: radius.md,
+                    marginTop: space[3],
+                  },
+                ]}
               >
-                <Text style={{ color: total > 0 ? '#fff' : (dark ? '#94A3B8' : '#64748B'), fontWeight: '700' }}>Continuar al pago</Text>
+                <Text style={{ color: total > 0 ? color.textInverse : color.textMuted, fontWeight: font.weight.bold }}>
+                  Continuar al pago
+                </Text>
               </Pressable>
             </View>
           </View>
         )}
       </View>
 
-      {/* Botón flotante y sheet móvil */}
+      {/* Mobile FAB and sheet */}
       {!isWide && (
         <>
-          <Pressable onPress={() => setCartOpen(true)} style={[styles.fab, { backgroundColor: '#F97316' }]}>
-            <MaterialCommunityIcons name="cart" size={18} color="#fff" />
-            <Text style={{ color: '#fff', fontWeight: '800', marginLeft: 8 }}>Ver pedido{itemCount ? ` (${itemCount})` : ''}</Text>
+          <Pressable
+            onPress={() => setCartOpen(true)}
+            style={[
+              styles.fab,
+              {
+                backgroundColor: color.accent,
+                borderRadius: radius.full,
+                paddingVertical: space[4],
+                paddingHorizontal: space[4],
+                left: space[4],
+                right: space[4],
+                bottom: space[4],
+                ...shadow.md,
+              },
+            ]}
+          >
+            <MaterialCommunityIcons name="cart" size={18} color={color.textInverse} />
+            <Text style={{ color: color.textInverse, fontWeight: font.weight.black, marginLeft: space[2] }}>
+              Ver pedido{itemCount ? ` (${itemCount})` : ''}
+            </Text>
             <View style={{ flex: 1 }} />
-            <Text style={{ color: '#fff', fontWeight: '800' }}>{money(total)}</Text>
+            <Text style={{ color: color.textInverse, fontWeight: font.weight.black }}>{money(total)}</Text>
           </Pressable>
 
           <Modal visible={cartOpen} animationType="slide" transparent onRequestClose={() => setCartOpen(false)}>
             <View style={{ flex: 1, justifyContent: 'flex-end' }}>
-              <Pressable style={styles.backdrop} onPress={() => setCartOpen(false)} />
-              <View style={[styles.sheet, { backgroundColor: colors.card, borderColor: dark ? 'rgba(255,255,255,0.08)' : '#E5E7EB' }]}>
-                <View style={styles.sheetHandle} />
+              <Pressable style={[styles.backdrop, { backgroundColor: color.overlay }]} onPress={() => setCartOpen(false)} />
+              <View
+                style={[
+                  styles.sheet,
+                  {
+                    backgroundColor: color.bgElevated,
+                    borderColor: color.border,
+                    borderTopLeftRadius: radius.lg,
+                    borderTopRightRadius: radius.lg,
+                    padding: space[4],
+                  },
+                ]}
+              >
+                <View style={[styles.sheetHandle, { backgroundColor: color.textMuted }]} />
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Text style={[styles.cartTitle, { color: colors.text }]}>Orden actual</Text>
+                  <Text style={[styles.cartTitle, { color: color.text, fontSize: font.size.md }]}>Orden actual</Text>
                   <Pressable onPress={() => setCartOpen(false)}>
-                    <MaterialCommunityIcons name="close" size={22} color={colors.text} />
+                    <MaterialCommunityIcons name="close" size={22} color={color.text} />
                   </Pressable>
                 </View>
 
-                {/* Items */}
-                <ScrollView style={{ marginTop: 12 }} contentContainerStyle={{ paddingBottom: 16 }}>
+                <ScrollView style={{ marginTop: space[3] }} contentContainerStyle={{ paddingBottom: space[4] }}>
                   {Object.values(cart).length === 0 ? (
-                    <Text style={{ color: colors.text, opacity: 0.7 }}>No hay productos en el carrito</Text>
+                    <Text style={{ color: color.textMuted }}>No hay productos en el carrito</Text>
                   ) : (
                     Object.values(cart).map(({ product, qty }) => (
-                      <View key={product.id} style={[styles.cartItem, { borderColor: dark ? 'rgba(255,255,255,0.08)' : '#E5E7EB' }]}>
+                      <View key={product.id} style={[styles.cartItem, { borderColor: color.border }]}>
                         <Image source={{ uri: product.image }} style={styles.cartThumb} contentFit="cover" />
-                        <View style={{ flex: 1, marginHorizontal: 8 }}>
-                          <Text numberOfLines={1} style={{ color: colors.text, fontWeight: '600' }}>{product.title}</Text>
-                          <Text style={{ color: '#F97316', marginTop: 2 }}>{money(product.price)}</Text>
+                        <View style={{ flex: 1, marginHorizontal: space[2] }}>
+                          <Text numberOfLines={1} style={{ color: color.text, fontWeight: font.weight.semibold }}>
+                            {product.title}
+                          </Text>
+                          <Text style={{ color: color.accent, marginTop: 2 }}>{money(product.price)}</Text>
                         </View>
-                        <View style={styles.stepper}>
+                        <View style={[styles.stepper, { backgroundColor: color.accent, borderRadius: radius.full }]}>
                           <Pressable onPress={() => dec(product.id)} style={styles.stepBtn}>
-                            <MaterialCommunityIcons name="minus" size={16} color="#fff" />
+                            <MaterialCommunityIcons name="minus" size={16} color={color.textInverse} />
                           </Pressable>
-                          <Text style={{ width: 22, textAlign: 'center', color: colors.text }}>{qty}</Text>
+                          <Text style={{ width: 22, textAlign: 'center', color: color.textInverse }}>{qty}</Text>
                           <Pressable onPress={() => inc(product.id)} style={styles.stepBtn}>
-                            <MaterialCommunityIcons name="plus" size={16} color="#fff" />
+                            <MaterialCommunityIcons name="plus" size={16} color={color.textInverse} />
                           </Pressable>
                         </View>
                         <Pressable onPress={() => removeItem(product.id)} style={{ padding: 6, marginLeft: 4 }}>
-                          <MaterialCommunityIcons name="trash-can-outline" size={18} color={dark ? '#FCA5A5' : '#DC2626'} />
+                          <MaterialCommunityIcons name="trash-can-outline" size={18} color={color.danger} />
                         </Pressable>
                       </View>
                     ))
                   )}
                 </ScrollView>
 
-                {/* Totals */}
-                <View style={[styles.summaryBox, { backgroundColor: dark ? 'rgba(255,255,255,0.02)' : '#F8FAFC', borderColor: dark ? 'rgba(255,255,255,0.06)' : '#E5E7EB' }]}>
-                  <Row label="Subtotal" value={money(subtotal)} colors={colors} />
-                  <Row label="Descuento" value={`-${money(discount)}`} colors={colors} />
-                  <Row label="Impuestos" value={money(tax)} colors={colors} />
-                  <View style={{ height: 1, backgroundColor: dark ? 'rgba(255,255,255,0.08)' : '#E5E7EB', marginVertical: 8 }} />
-                  <Row label="Total" value={money(total)} bold colors={colors} />
+                <View
+                  style={[
+                    styles.summaryBox,
+                    {
+                      backgroundColor: color.bgSubtle,
+                      borderColor: color.border,
+                      borderRadius: radius.md,
+                      padding: space[3],
+                      marginTop: space[3],
+                    },
+                  ]}
+                >
+                  <Row label="Subtotal" value={money(subtotal)} color={color.text} />
+                  <Row label="Descuento" value={`-${money(discount)}`} color={color.text} />
+                  <Row label="Impuestos" value={money(tax)} color={color.text} />
+                  <View style={{ height: 1, backgroundColor: color.border, marginVertical: space[2] }} />
+                  <Row label="Total" value={money(total)} bold color={color.text} />
                 </View>
 
                 <Pressable
                   onPress={() => Alert.alert('Pago', 'Continuar al flujo de pago...')}
                   disabled={total <= 0}
-                  style={[styles.payBtn, { backgroundColor: total > 0 ? '#F97316' : (dark ? 'rgba(255,255,255,0.08)' : '#E5E7EB') }]}
+                  style={[
+                    styles.payBtn,
+                    {
+                      backgroundColor: total > 0 ? color.accent : color.borderSubtle,
+                      borderRadius: radius.md,
+                      marginTop: space[3],
+                    },
+                  ]}
                 >
-                  <Text style={{ color: total > 0 ? '#fff' : (dark ? '#94A3B8' : '#64748B'), fontWeight: '700' }}>Continuar al pago</Text>
+                  <Text style={{ color: total > 0 ? color.textInverse : color.textMuted, fontWeight: font.weight.bold }}>
+                    Continuar al pago
+                  </Text>
                 </Pressable>
               </View>
             </View>
@@ -382,11 +480,11 @@ export default function OrdenScreen() {
   );
 }
 
-function Row({ label, value, bold, colors }: { label: string; value: string; bold?: boolean; colors: any }) {
+function Row({ label, value, bold, color }: { label: string; value: string; bold?: boolean; color: string }) {
   return (
     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginVertical: 4 }}>
-      <Text style={{ color: colors.text, opacity: 0.8 }}>{label}</Text>
-      <Text style={{ color: colors.text, fontWeight: bold ? '800' : '600' }}>{value}</Text>
+      <Text style={{ color, opacity: 0.8 }}>{label}</Text>
+      <Text style={{ color, fontWeight: bold ? '800' : '600' }}>{value}</Text>
     </View>
   );
 }
@@ -394,7 +492,6 @@ function Row({ label, value, bold, colors }: { label: string; value: string; bol
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
   },
   content: {
     flex: 1,
@@ -407,9 +504,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 10,
     gap: 8,
   },
   input: {
@@ -418,50 +512,28 @@ const styles = StyleSheet.create({
   },
   filterBtn: {
     padding: 6,
-    borderRadius: 8,
-  },
-  chip: {
-    height: 44,
-    paddingHorizontal: 16,
-    borderRadius: 22,
-    backgroundColor: 'rgba(148,163,184,0.2)',
     borderWidth: 1,
-    borderColor: 'transparent',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  chipText: {
-    fontWeight: '700',
-    fontSize: 14,
   },
   card: {
     borderWidth: 1,
-    borderRadius: 12,
-    padding: 12,
   },
   cardTitle: {
-    fontSize: 15,
     fontWeight: '700',
   },
   price: {
-    fontSize: 16,
     fontWeight: '800',
   },
   addBtn: {
     paddingHorizontal: 12,
     paddingVertical: 10,
-    borderRadius: 10,
   },
   cartContainer: {
     alignSelf: 'stretch',
   },
   cartPanel: {
     borderWidth: 1,
-    borderRadius: 14,
-    padding: 14,
   },
   cartTitle: {
-    fontSize: 16,
     fontWeight: '800',
   },
   cartItem: {
@@ -478,8 +550,6 @@ const styles = StyleSheet.create({
   stepper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F97316',
-    borderRadius: 999,
     paddingHorizontal: 6,
     paddingVertical: 6,
   },
@@ -489,52 +559,31 @@ const styles = StyleSheet.create({
   },
   summaryBox: {
     borderWidth: 1,
-    borderRadius: 12,
-    padding: 12,
-    marginTop: 12,
   },
   payBtn: {
-    marginTop: 12,
     paddingVertical: 14,
     alignItems: 'center',
-    borderRadius: 12,
   },
   fab: {
     position: 'absolute',
-    left: 16,
-    right: 16,
-    bottom: 16,
-    borderRadius: 999,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 3,
   },
   sheet: {
     position: 'absolute',
     left: 0,
     right: 0,
     bottom: 0,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
     borderWidth: 1,
-    padding: 14,
     maxHeight: '75%',
   },
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.35)',
   },
   sheetHandle: {
     width: 42,
     height: 5,
     borderRadius: 999,
-    backgroundColor: 'rgba(148,163,184,0.6)',
     alignSelf: 'center',
     marginBottom: 8,
   },

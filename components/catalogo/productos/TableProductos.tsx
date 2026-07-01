@@ -1,8 +1,9 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useTheme } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import React, { useMemo, useState } from 'react';
 import { Alert, FlatList, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
+
+import { useAppTheme } from '@/src/theme/ThemeProvider';
 
 export type Producto = {
   id: string;
@@ -25,13 +26,13 @@ const MIN_TABLE_W = 900;
 const CONTENT_MAX_W = 1000;
 
 export default function TableProductos() {
-  const { colors, dark } = useTheme();
+  const { color, space, radius, font } = useAppTheme();
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const { width } = useWindowDimensions();
   const isWide = width >= 1000;
   const isWeb = Platform.OS === 'web';
-  const PAGE_PADDING = 16; // debe coincidir con padding del screen
+  const PAGE_PADDING = 16;
   const containerWidth = (isWeb || isWide)
     ? Math.min(width - PAGE_PADDING * 2, CONTENT_MAX_W)
     : width - PAGE_PADDING * 2;
@@ -47,30 +48,71 @@ export default function TableProductos() {
 
   return (
     <View style={{ flex: 1 }}>
-      {/* Toolbar (sin cambios de centrado) */}
       <View style={{ width: '100%', alignItems: 'center' }}>
-        <View style={[styles.toolbar, { width: '100%', maxWidth: MIN_TABLE_W }]}>
-          <View style={[styles.search, { backgroundColor: colors.card, borderColor: dark ? 'rgba(255,255,255,0.08)' : '#E5E7EB' }]}>
-            <MaterialCommunityIcons name="magnify" color={colors.text} size={18} style={{ opacity: 0.7 }} />
+        <View style={[styles.toolbar, { width: '100%', maxWidth: MIN_TABLE_W, marginBottom: space[3] }]}>
+          <View
+            style={[
+              styles.search,
+              {
+                backgroundColor: color.bgElevated,
+                borderColor: color.border,
+                borderRadius: radius.md,
+                paddingHorizontal: space[3],
+                paddingVertical: space[2],
+                marginRight: space[2],
+                marginBottom: space[2],
+              },
+            ]}
+          >
+            <MaterialCommunityIcons name="magnify" color={color.textMuted} size={18} />
             <TextInput
               placeholder="Buscar por nombre o categoría"
-              placeholderTextColor={dark ? '#94A3B8' : '#94A3B8'}
+              placeholderTextColor={color.textMuted}
               value={query}
-            onChangeText={setQuery}
-            style={{ flex: 1, color: colors.text }}
-          />
+              onChangeText={setQuery}
+              style={{ flex: 1, color: color.text, marginLeft: space[2] }}
+            />
           </View>
-          <Pressable onPress={() => Alert.alert('Filtros', 'Filtros de productos próximamente')} style={[styles.btn, { borderColor: dark ? 'rgba(255,255,255,0.08)' : '#E5E7EB' }]}>
-            <MaterialCommunityIcons name="tune" color={colors.text} size={18} />
-            <Text style={{ color: colors.text, fontWeight: '700', marginLeft: 6 }}>Filtros</Text>
+          <Pressable
+            onPress={() => Alert.alert('Filtros', 'Filtros de productos próximamente')}
+            style={[
+              styles.btn,
+              {
+                borderColor: color.border,
+                borderRadius: radius.md,
+                paddingHorizontal: space[3],
+                paddingVertical: space[2],
+                marginRight: space[2],
+                marginBottom: space[2],
+              },
+            ]}
+          >
+            <MaterialCommunityIcons name="tune" color={color.text} size={18} />
+            <Text style={{ color: color.text, fontWeight: font.weight.semibold, marginLeft: space[2], fontSize: font.size.sm }}>
+              Filtros
+            </Text>
           </Pressable>
-          <Pressable onPress={() => Alert.alert('Nuevo producto', 'Acción crear producto')} style={[styles.btnPrimary]}>
-            <MaterialCommunityIcons name="plus" color="#fff" size={18} />
-            <Text style={{ color: '#fff', fontWeight: '800', marginLeft: 6 }}>Nuevo producto</Text>
+          <Pressable
+            onPress={() => Alert.alert('Nuevo producto', 'Acción crear producto')}
+            style={[
+              styles.btn,
+              {
+                backgroundColor: color.accent,
+                borderRadius: radius.md,
+                paddingHorizontal: space[3],
+                paddingVertical: space[2],
+                marginBottom: space[2],
+              },
+            ]}
+          >
+            <MaterialCommunityIcons name="plus" color={color.textInverse} size={18} />
+            <Text style={{ color: color.textInverse, fontWeight: font.weight.bold, marginLeft: space[2], fontSize: font.size.sm }}>
+              Nuevo producto
+            </Text>
           </Pressable>
         </View>
       </View>
-      {/* Tabla con scroll horizontal centrada en web */}
+
       <View style={{ width: '100%', maxWidth: (isWeb || isWide) ? CONTENT_MAX_W : undefined, alignSelf: (isWeb || isWide) ? 'center' : 'stretch' }}>
         <ScrollView
           horizontal
@@ -79,64 +121,91 @@ export default function TableProductos() {
           contentContainerStyle={{ paddingLeft: (isWeb || isWide) ? sidePad : 0, paddingRight: (isWeb || isWide) ? sidePad : 0 }}
         >
           <View style={{ minWidth: MIN_TABLE_W, flex: 1 }}>
-            {/* Header row */}
-            <View style={[styles.row, styles.header, { backgroundColor: dark ? 'rgba(255,255,255,0.03)' : '#F8FAFC', borderColor: dark ? 'rgba(255,255,255,0.08)' : '#E5E7EB' }]}> 
-              <View style={[styles.cell, { width: 44 }]}> 
-                <MaterialCommunityIcons name="checkbox-blank-outline" color={colors.text} size={20} />
+            <View
+              style={[
+                styles.row,
+                styles.header,
+                {
+                  backgroundColor: color.bgSubtle,
+                  borderColor: color.border,
+                  borderTopLeftRadius: radius.md,
+                  borderTopRightRadius: radius.md,
+                },
+              ]}
+            >
+              <View style={[styles.cell, { width: 44 }]}>
+                <MaterialCommunityIcons name="checkbox-blank-outline" color={color.text} size={20} />
               </View>
               <View style={[styles.cell, { flex: 3, alignItems: 'flex-start' }]}>
-                <Text numberOfLines={1} style={[styles.headerText, { color: colors.text }]}>Producto</Text>
+                <Text numberOfLines={1} style={[styles.headerText, { color: color.text, fontSize: font.size.xs }]}>
+                  Producto
+                </Text>
               </View>
               <View style={[styles.cell, { flex: 2 }]}>
-                <Text numberOfLines={1} style={[styles.headerText, { color: colors.text }]}>Categoría</Text>
+                <Text numberOfLines={1} style={[styles.headerText, { color: color.text, fontSize: font.size.xs }]}>
+                  Categoría
+                </Text>
               </View>
               <View style={[styles.cell, { flex: 1 }]}>
-                <Text numberOfLines={1} style={[styles.headerText, { color: colors.text }]}>Stock</Text>
+                <Text numberOfLines={1} style={[styles.headerText, { color: color.text, fontSize: font.size.xs }]}>
+                  Stock
+                </Text>
               </View>
               <View style={[styles.cell, { flex: 1 }]}>
-                <Text numberOfLines={1} style={[styles.headerText, { color: colors.text }]}>Precio</Text>
+                <Text numberOfLines={1} style={[styles.headerText, { color: color.text, fontSize: font.size.xs }]}>
+                  Precio
+                </Text>
               </View>
               <View style={[styles.cell, { width: 44 }]} />
             </View>
 
-            {/* List */}
             <FlatList
               data={items}
               keyExtractor={(it) => it.id}
               renderItem={({ item }) => {
                 const checked = !!selected[item.id];
                 return (
-                  <View style={[styles.row, { borderColor: dark ? 'rgba(255,255,255,0.08)' : '#E5E7EB' }]}> 
-                    <Pressable onPress={() => toggleSelect(item.id)} style={[styles.cell, { width: 44, alignItems: 'center' }]}> 
+                  <View style={[styles.row, { borderColor: color.border }]}>
+                    <Pressable onPress={() => toggleSelect(item.id)} style={[styles.cell, { width: 44, alignItems: 'center' }]}>
                       <MaterialCommunityIcons
                         name={checked ? 'checkbox-marked' : 'checkbox-blank-outline'}
-                        color={checked ? '#2563EB' : colors.text}
+                        color={checked ? color.accent : color.text}
                         size={20}
                       />
                     </Pressable>
-                    <View style={[styles.cell, { flex: 3, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' }]}> 
-                      <Image source={{ uri: item.imagen }} style={styles.thumb} contentFit="cover" />
-                      <View style={{ marginLeft: 10 }}>
-                        <Text numberOfLines={1} style={{ color: colors.text, fontWeight: '700' }}>{item.nombre}</Text>
+                    <View style={[styles.cell, { flex: 3, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' }]}>
+                      <Image source={{ uri: item.imagen }} style={[styles.thumb, { backgroundColor: color.border }]} contentFit="cover" />
+                      <View style={{ marginLeft: space[3] }}>
+                        <Text numberOfLines={1} style={{ color: color.text, fontWeight: font.weight.semibold }}>
+                          {item.nombre}
+                        </Text>
                       </View>
                     </View>
-                    <View style={[styles.cell, { flex: 2 }]}> 
-                      <Text style={{ color: colors.text, opacity: 0.85 }}>{item.categoria}</Text>
+                    <View style={[styles.cell, { flex: 2 }]}>
+                      <Text style={{ color: color.textMuted }}>{item.categoria}</Text>
                     </View>
-                    <View style={[styles.cell, { flex: 1 }]}> 
-                      <Text style={{ color: colors.text }}>{item.stock}</Text>
+                    <View style={[styles.cell, { flex: 1 }]}>
+                      <Text style={{ color: color.text }}>{item.stock}</Text>
                     </View>
-                    <View style={[styles.cell, { flex: 1 }]}> 
-                      <Text style={{ color: colors.text, fontWeight: '700' }}>{money(item.precio)}</Text>
+                    <View style={[styles.cell, { flex: 1 }]}>
+                      <Text style={{ color: color.text, fontWeight: font.weight.semibold }}>{money(item.precio)}</Text>
                     </View>
-                    <Pressable onPress={() => Alert.alert('Acciones', `Acciones para ${item.nombre}`)} style={[styles.cell, { width: 44, alignItems: 'center' }]}> 
-                      <MaterialCommunityIcons name="dots-vertical" color={colors.text} size={20} />
+                    <Pressable
+                      onPress={() => Alert.alert('Acciones', `Acciones para ${item.nombre}`)}
+                      style={[styles.cell, { width: 44, alignItems: 'center' }]}
+                    >
+                      <MaterialCommunityIcons name="dots-vertical" color={color.text} size={20} />
                     </Pressable>
                   </View>
                 );
               }}
-              ItemSeparatorComponent={() => <View style={{ height: 1, backgroundColor: dark ? 'rgba(255,255,255,0.08)' : '#E5E7EB' }} />}
-              contentContainerStyle={{ borderWidth: 1, borderColor: dark ? 'rgba(255,255,255,0.08)' : '#E5E7EB', borderRadius: 12, overflow: 'hidden' }}
+              ItemSeparatorComponent={() => <View style={{ height: 1, backgroundColor: color.border }} />}
+              contentContainerStyle={{
+                borderWidth: 1,
+                borderColor: color.border,
+                borderRadius: radius.md,
+                overflow: 'hidden',
+              }}
             />
           </View>
         </ScrollView>
@@ -150,8 +219,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flexWrap: 'wrap',
-    marginBottom: 12,
-    borderBottomWidth: 0,
   },
   search: {
     flex: 1,
@@ -159,39 +226,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    marginRight: 8,
-    marginBottom: 8,
   },
   btn: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginRight: 8,
-    marginBottom: 8,
-  },
-  btnPrimary: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#2563EB',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginBottom: 8,
   },
   header: {
     borderWidth: 1,
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
   },
   headerText: {
     fontWeight: '800',
-    fontSize: 12,
     textTransform: 'uppercase',
     letterSpacing: 0.3,
   },
@@ -208,6 +253,5 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 8,
-    backgroundColor: '#E5E7EB',
   },
 });

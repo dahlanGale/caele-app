@@ -1,13 +1,14 @@
-import { useTheme } from '@react-navigation/native';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { useAppTheme } from '@/src/theme/ThemeProvider';
+
 export default function DashboardScreen() {
-  const { colors } = useTheme();
+  const { color, space, font } = useAppTheme();
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Text style={[styles.title, { color: colors.text }]}>Inicio</Text>
-      <Text style={{ color: colors.text }}>Resumenes de ventas y mesas (Próximamente).</Text>
+    <View style={[styles.container, { backgroundColor: color.bg, padding: space[4] }]}>
+      <Text style={[styles.title, { color: color.text, fontSize: font.size.lg }]}>Inicio</Text>
+      <Text style={{ color: color.textMuted }}>Resumenes de ventas y mesas (Próximamente).</Text>
     </View>
   );
 }
@@ -15,10 +16,8 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
   },
   title: {
-    fontSize: 22,
     fontWeight: '600',
     marginBottom: 8,
   },

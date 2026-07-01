@@ -1,12 +1,13 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useTheme } from '@react-navigation/native';
 import React, { useMemo, useState } from 'react';
 import { Alert, FlatList, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
+
+import { useAppTheme } from '@/src/theme/ThemeProvider';
 
 export type Categoria = {
   id: string;
   nombre: string;
-  productos: number; // cantidad de productos
+  productos: number;
   activa: boolean;
 };
 
@@ -18,16 +19,15 @@ const MOCK: Categoria[] = [
 ];
 
 const MIN_TABLE_W = 720;
-const CONTENT_MAX_W = 1000; // centrar en web con este ancho máximo
+const CONTENT_MAX_W = 1000;
 
 export default function TableCategorias() {
-  const { colors, dark } = useTheme();
+  const { color, space, radius, font } = useAppTheme();
   const [query, setQuery] = useState('');
   const { width } = useWindowDimensions();
   const isWide = width >= 1000;
   const isWeb = Platform.OS === 'web';
-  // ancho efectivo del contenedor en web/ancho y padding lateral para centrar la tabla
-  const PAGE_PADDING = 16; // mismo padding que en CatalogoScreen.styles.container
+  const PAGE_PADDING = 16;
   const containerWidth = (isWeb || isWide)
     ? Math.min(width - PAGE_PADDING * 2, CONTENT_MAX_W)
     : width - PAGE_PADDING * 2;
@@ -40,34 +40,53 @@ export default function TableCategorias() {
 
   return (
     <View style={{ flex: 1 }}>
-      {/* Contenedor centrado en web/ancho */}
       <View style={{ width: '100%', maxWidth: (isWeb || isWide) ? CONTENT_MAX_W : undefined, alignSelf: (isWeb || isWide) ? 'center' : 'stretch' }}>
-        {/* Toolbar centrada y alineada con el ancho de la tabla */}
         <View style={{ width: '100%', alignItems: 'center' }}>
-          <View style={[styles.toolbar, { width: '100%', maxWidth: MIN_TABLE_W }]}>
+          <View style={[styles.toolbar, { width: '100%', maxWidth: MIN_TABLE_W, marginBottom: space[3] }]}>
             <View
               style={[
                 styles.search,
-                { backgroundColor: colors.card, borderColor: dark ? 'rgba(255,255,255,0.08)' : '#E5E7EB' }
+                {
+                  backgroundColor: color.bgElevated,
+                  borderColor: color.border,
+                  borderRadius: radius.md,
+                  paddingHorizontal: space[3],
+                  paddingVertical: space[2],
+                  marginRight: space[2],
+                  marginBottom: space[2],
+                },
               ]}
             >
-              <MaterialCommunityIcons name="magnify" color={colors.text} size={18} style={{ opacity: 0.7 }} />
+              <MaterialCommunityIcons name="magnify" color={color.textMuted} size={18} />
               <TextInput
                 placeholder="Buscar categoría"
-                placeholderTextColor={dark ? '#94A3B8' : '#94A3B8'}
+                placeholderTextColor={color.textMuted}
                 value={query}
                 onChangeText={setQuery}
-                style={{ flex: 1, color: colors.text }}
+                style={{ flex: 1, color: color.text, marginLeft: space[2] }}
               />
             </View>
-            <Pressable onPress={() => Alert.alert('Nueva categoría', 'Acción crear categoría')} style={[styles.btnPrimary]}>
-              <MaterialCommunityIcons name="plus" color="#fff" size={18} />
-              <Text style={{ color: '#fff', fontWeight: '800', marginLeft: 6 }}>Nueva categoría</Text>
+            <Pressable
+              onPress={() => Alert.alert('Nueva categoría', 'Acción crear categoría')}
+              style={[
+                styles.btn,
+                {
+                  backgroundColor: color.accent,
+                  borderRadius: radius.md,
+                  paddingHorizontal: space[3],
+                  paddingVertical: space[2],
+                  marginBottom: space[2],
+                },
+              ]}
+            >
+              <MaterialCommunityIcons name="plus" color={color.textInverse} size={18} />
+              <Text style={{ color: color.textInverse, fontWeight: font.weight.bold, marginLeft: space[2], fontSize: font.size.sm }}>
+                Nueva categoría
+              </Text>
             </Pressable>
           </View>
         </View>
 
-        {/* Tabla con scroll horizontal, centrada en web */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -75,16 +94,32 @@ export default function TableCategorias() {
           contentContainerStyle={{ paddingLeft: (isWeb || isWide) ? sidePad : 0, paddingRight: (isWeb || isWide) ? sidePad : 0 }}
         >
           <View style={{ minWidth: MIN_TABLE_W, flex: 1 }}>
-            {/* Header */}
-            <View style={[styles.row, styles.header, { backgroundColor: dark ? 'rgba(255,255,255,0.03)' : '#F8FAFC', borderColor: dark ? 'rgba(255,255,255,0.08)' : '#E5E7EB' }]}> 
+            <View
+              style={[
+                styles.row,
+                styles.header,
+                {
+                  backgroundColor: color.bgSubtle,
+                  borderColor: color.border,
+                  borderTopLeftRadius: radius.md,
+                  borderTopRightRadius: radius.md,
+                },
+              ]}
+            >
               <View style={[styles.cell, { flex: 3 }]}>
-                <Text numberOfLines={1} style={[styles.headerText, { color: colors.text }]}>Nombre</Text>
+                <Text numberOfLines={1} style={[styles.headerText, { color: color.text, fontSize: font.size.xs }]}>
+                  Nombre
+                </Text>
               </View>
               <View style={[styles.cell, { flex: 1 }]}>
-                <Text numberOfLines={1} style={[styles.headerText, { color: colors.text }]}>Productos</Text>
+                <Text numberOfLines={1} style={[styles.headerText, { color: color.text, fontSize: font.size.xs }]}>
+                  Productos
+                </Text>
               </View>
               <View style={[styles.cell, { flex: 1 }]}>
-                <Text numberOfLines={1} style={[styles.headerText, { color: colors.text }]}>Estado</Text>
+                <Text numberOfLines={1} style={[styles.headerText, { color: color.text, fontSize: font.size.xs }]}>
+                  Estado
+                </Text>
               </View>
               <View style={[styles.cell, { width: 44 }]} />
             </View>
@@ -93,24 +128,42 @@ export default function TableCategorias() {
               data={items}
               keyExtractor={(it) => it.id}
               renderItem={({ item }) => (
-                <View style={[styles.row, { borderColor: dark ? 'rgba(255,255,255,0.08)' : '#E5E7EB' }]}> 
-                  <View style={[styles.cell, { flex: 3 }]}> 
-                    <Text numberOfLines={1} style={{ color: colors.text, fontWeight: '700' }}>{item.nombre}</Text>
+                <View style={[styles.row, { borderColor: color.border }]}>
+                  <View style={[styles.cell, { flex: 3 }]}>
+                    <Text numberOfLines={1} style={{ color: color.text, fontWeight: font.weight.semibold }}>
+                      {item.nombre}
+                    </Text>
                   </View>
-                  <View style={[styles.cell, { flex: 1 }]}> 
-                    <Text style={{ color: colors.text }}>{item.productos}</Text>
+                  <View style={[styles.cell, { flex: 1 }]}>
+                    <Text style={{ color: color.text }}>{item.productos}</Text>
                   </View>
-                  <View style={[styles.cell, { flex: 1, flexDirection: 'row', alignItems: 'center' }]}> 
-                    <View style={{ width: 8, height: 8, borderRadius: 999, backgroundColor: item.activa ? '#22C55E' : '#F59E0B', marginRight: 6 }} />
-                    <Text style={{ color: colors.text, opacity: 0.9 }}>{item.activa ? 'Activa' : 'Inactiva'}</Text>
+                  <View style={[styles.cell, { flex: 1, flexDirection: 'row', alignItems: 'center' }]}>
+                    <View
+                      style={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: 999,
+                        backgroundColor: item.activa ? color.success : color.warning,
+                        marginRight: space[2],
+                      }}
+                    />
+                    <Text style={{ color: color.textMuted }}>{item.activa ? 'Activa' : 'Inactiva'}</Text>
                   </View>
-                  <Pressable onPress={() => Alert.alert('Acciones', `Acciones para ${item.nombre}`)} style={[styles.cell, { width: 44, alignItems: 'center' }]}> 
-                    <MaterialCommunityIcons name="dots-vertical" color={colors.text} size={20} />
+                  <Pressable
+                    onPress={() => Alert.alert('Acciones', `Acciones para ${item.nombre}`)}
+                    style={[styles.cell, { width: 44, alignItems: 'center' }]}
+                  >
+                    <MaterialCommunityIcons name="dots-vertical" color={color.text} size={20} />
                   </Pressable>
                 </View>
               )}
-              ItemSeparatorComponent={() => <View style={{ height: 1, backgroundColor: dark ? 'rgba(255,255,255,0.08)' : '#E5E7EB' }} />}
-              contentContainerStyle={{ borderWidth: 1, borderColor: dark ? 'rgba(255,255,255,0.08)' : '#E5E7EB', borderRadius: 12, overflow: 'hidden' }}
+              ItemSeparatorComponent={() => <View style={{ height: 1, backgroundColor: color.border }} />}
+              contentContainerStyle={{
+                borderWidth: 1,
+                borderColor: color.border,
+                borderRadius: radius.md,
+                overflow: 'hidden',
+              }}
             />
           </View>
         </ScrollView>
@@ -124,7 +177,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flexWrap: 'wrap',
-    marginBottom: 12,
   },
   search: {
     flex: 1,
@@ -132,29 +184,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    marginRight: 8,
-    marginBottom: 8,
   },
-  btnPrimary: {
+  btn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#7C3AED',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginBottom: 8,
+    borderWidth: 1,
   },
   header: {
     borderWidth: 1,
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
   },
   headerText: {
     fontWeight: '800',
-    fontSize: 12,
     textTransform: 'uppercase',
     letterSpacing: 0.3,
   },

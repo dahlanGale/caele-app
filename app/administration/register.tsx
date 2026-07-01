@@ -4,10 +4,15 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import React, { useState } from 'react';
-import { Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
+
+import { Button } from '@/src/components/ui';
+import { Input } from '@/src/components/ui/Input';
+import { useAppTheme } from '@/src/theme/ThemeProvider';
 import FirestoreAdministracion from '../../firebase/FirestoreAdministracion';
 
 export default function RegisterScreen() {
+  const { color, space, radius, font, shadow } = useAppTheme();
   const [name, setName] = useState('');
   const [businessName, setBusinessName] = useState('');
   const [celular, setCelular] = useState('');
@@ -33,13 +38,11 @@ export default function RegisterScreen() {
     }
     setLoading(true);
     try {
-      // 1. Registrar el usuario en Firebase Auth
       const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
       if (name.trim()) {
         await updateProfile(cred.user, { displayName: name.trim() });
       }
 
-      // 2. Registrar la pyme en Firestore (antes de navegar)
       await FirestoreAdministracion.registrarPyme({
         id: cred.user.uid,
         nombre: name.trim(),
@@ -50,7 +53,6 @@ export default function RegisterScreen() {
         isAdmin: true,
       });
 
-      // 3. Navegar solo si todo lo anterior tuvo éxito
       router.replace('/(drawer)/dashboard');
     } catch (e: any) {
       setError(e?.message ?? 'No se pudo crear la cuenta');
@@ -58,103 +60,100 @@ export default function RegisterScreen() {
       setLoading(false);
     }
   };
- 
+
   return (
     <View style={styles.root}>
       <LinearGradient
-        colors={["#CDDDEF", "#FFFFFF"]}
+        colors={[color.bgSubtle, color.bg]}
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 1 }}
         style={styles.gradient}
       >
         <View style={styles.center}>
-          <View style={styles.card}>
+          <View
+            style={[
+              styles.card,
+              {
+                backgroundColor: color.bgElevated,
+                borderRadius: radius.lg,
+                padding: space[5],
+                ...shadow.md,
+                borderColor: color.border,
+              },
+            ]}
+          >
             <View style={styles.header}>
               <Image
                 source={require('@/assets/images/icon.png')}
                 style={styles.logo}
                 resizeMode="contain"
               />
-              <Text style={styles.title}>Crear cuenta</Text>
-              <Text style={styles.subtitle}>Regístrate para comenzar</Text>
+              <Text style={[styles.title, { color: color.text, fontSize: font.size.xl }]}>
+                Crear cuenta
+              </Text>
+              <Text style={[styles.subtitle, { color: color.textMuted, fontSize: font.size.sm, marginTop: space[1] }]}>
+                Regístrate para comenzar
+              </Text>
             </View>
 
-            <View style={{ gap: 12 }}>
-              <View style={styles.inputRow}>
-                <MaterialCommunityIcons name="account-outline" size={20} color="#6B7280" style={styles.icon} />
-                <TextInput
-                  placeholder="Nombre (opcional)"
-                  autoCapitalize="words"
-                  value={name}
-                  onChangeText={setName}
-                  style={styles.inputControl}
-                />
-              </View>
-              <View style={styles.inputRow}>
-                <MaterialCommunityIcons name="account-outline" size={20} color="#6B7280" style={styles.icon} />
-                <TextInput
-                  placeholder="Nombre del negocio"
-                  autoCapitalize="words"
-                  value={businessName}
-                  onChangeText={setBusinessName}
-                  style={styles.inputControl}
-                />
-              </View>
-              <View style={styles.inputRow}>
-                <MaterialCommunityIcons name="account-outline" size={20} color="#6B7280" style={styles.icon} />
-                <TextInput
-                  placeholder="Número de celular"
-                  autoCapitalize="words"
-                  value={celular}
-                  onChangeText={setCelular}
-                  style={styles.inputControl}
-                />
-              </View>
-              <View style={styles.inputRow}>
-                <MaterialCommunityIcons name="email-outline" size={20} color="#6B7280" style={styles.icon} />
-                <TextInput
-                  placeholder="Correo electrónico"
-                  autoCapitalize="none"
-                  keyboardType="email-address"
-                  value={email}
-                  onChangeText={setEmail}
-                  style={styles.inputControl}
-                />
-              </View>
-              <View style={styles.inputRow}>
-                <MaterialCommunityIcons name="lock-outline" size={20} color="#6B7280" style={styles.icon} />
-                <TextInput
-                  placeholder="Contraseña (mín. 6)"
-                  secureTextEntry
-                  value={password}
-                  onChangeText={setPassword}
-                  style={styles.inputControl}
-                />
-              </View>
-              <View style={styles.inputRow}>
-                <MaterialCommunityIcons name="lock-outline" size={20} color="#6B7280" style={styles.icon} />
-                <TextInput
-                  placeholder="Confirmar contraseña"
-                  secureTextEntry
-                  value={confirm}
-                  onChangeText={setConfirm}
-                  style={styles.inputControl}
-                />
-              </View>
+            <View style={{ gap: space[3] }}>
+              <Input
+                icon={<MaterialCommunityIcons name="account-outline" size={20} color={color.textMuted} />}
+                placeholder="Nombre (opcional)"
+                autoCapitalize="words"
+                value={name}
+                onChangeText={setName}
+              />
+              <Input
+                icon={<MaterialCommunityIcons name="store-outline" size={20} color={color.textMuted} />}
+                placeholder="Nombre del negocio"
+                autoCapitalize="words"
+                value={businessName}
+                onChangeText={setBusinessName}
+              />
+              <Input
+                icon={<MaterialCommunityIcons name="phone-outline" size={20} color={color.textMuted} />}
+                placeholder="Número de celular"
+                keyboardType="phone-pad"
+                value={celular}
+                onChangeText={setCelular}
+              />
+              <Input
+                icon={<MaterialCommunityIcons name="email-outline" size={20} color={color.textMuted} />}
+                placeholder="Correo electrónico"
+                autoCapitalize="none"
+                keyboardType="email-address"
+                value={email}
+                onChangeText={setEmail}
+              />
+              <Input
+                icon={<MaterialCommunityIcons name="lock-outline" size={20} color={color.textMuted} />}
+                placeholder="Contraseña (mín. 6)"
+                secureTextEntry
+                value={password}
+                onChangeText={setPassword}
+              />
+              <Input
+                icon={<MaterialCommunityIcons name="lock-outline" size={20} color={color.textMuted} />}
+                placeholder="Confirmar contraseña"
+                secureTextEntry
+                value={confirm}
+                onChangeText={setConfirm}
+              />
 
-              {error ? <Text style={styles.error}>{error}</Text> : null}
+              {error ? <Text style={[styles.error, { color: color.danger, fontSize: font.size.sm }]}>{error}</Text> : null}
 
-              <Pressable onPress={onRegister} disabled={loading} style={({ pressed }) => [
-                styles.primaryBtn,
-                pressed && styles.btnPressed,
-                loading && styles.btnDisabled,
-              ]}>
-                <Text style={styles.primaryBtnText}>{loading ? 'Creando cuenta…' : 'Crear cuenta'}</Text>
-              </Pressable>
-
-              <Pressable onPress={() => router.replace('/administration/login')} style={({ pressed }) => [styles.outlineBtn, pressed && styles.btnPressed]}>
-                <Text style={styles.outlineBtnText}>Ya tengo cuenta</Text>
-              </Pressable>
+              <Button
+                title={loading ? 'Creando cuenta…' : 'Crear cuenta'}
+                onPress={onRegister}
+                loading={loading}
+              />
+              <Button
+                title="Ya tengo cuenta"
+                variant="outline"
+                onPress={() => router.replace('/administration/login')}
+                disabled={loading}
+              />
             </View>
           </View>
         </View>
@@ -164,7 +163,7 @@ export default function RegisterScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#fff' },
+  root: { flex: 1 },
   gradient: { flex: 1 },
   center: {
     flex: 1,
@@ -175,14 +174,7 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 420,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 6,
+    borderWidth: 1,
   },
   header: {
     alignItems: 'center',
@@ -194,62 +186,12 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   title: {
-    fontSize: 24,
     fontWeight: '700',
-    color: '#111827',
   },
   subtitle: {
-    fontSize: 14,
-    color: '#6B7280',
-    marginTop: 4,
-  },
-  inputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 12,
-    backgroundColor: '#F9FAFB',
-    paddingHorizontal: 12,
-  },
-  icon: { marginRight: 6 },
-  inputControl: {
-    flex: 1,
-    paddingVertical: 12,
-    fontSize: 16,
+    fontWeight: '400',
   },
   error: {
-    color: '#DC2626',
-    fontSize: 13,
-  },
-  primaryBtn: {
-    backgroundColor: '#0000FF',
-    paddingVertical: 14,
-    borderRadius: 14,
-    alignItems: 'center',
-  },
-  primaryBtnText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  outlineBtn: {
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    paddingVertical: 14,
-    borderRadius: 14,
-    alignItems: 'center',
-    backgroundColor: '#fff',
-  },
-  outlineBtnText: {
-    color: '#111827',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  btnPressed: {
-    opacity: 0.85,
-  },
-  btnDisabled: {
-    opacity: 0.6,
+    fontWeight: '500',
   },
 });

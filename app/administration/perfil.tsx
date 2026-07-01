@@ -1,12 +1,10 @@
 import FireStoreUsuarios from '@/firebase/FirestoreUsuarios';
 import { auth } from '@/src/lib/firebase';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '@react-navigation/native';
 import { Stack, router } from 'expo-router';
 import { updateProfile } from 'firebase/auth';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-    ActivityIndicator,
     Alert,
     KeyboardAvoidingView,
     Platform,
@@ -14,12 +12,15 @@ import {
     ScrollView,
     StyleSheet,
     Text,
-    TextInput,
     View,
 } from 'react-native';
 
+import { Button } from '@/src/components/ui';
+import { Input } from '@/src/components/ui/Input';
+import { useAppTheme } from '@/src/theme/ThemeProvider';
+
 export default function PerfilScreen() {
-  const { colors } = useTheme();
+  const { color, space, font } = useAppTheme();
   const user = auth.currentUser;
 
   const [name, setName] = useState<string>(user?.displayName ?? '');
@@ -36,7 +37,6 @@ export default function PerfilScreen() {
   const dirty = useMemo(() => name !== initial.name || phone !== initial.phone, [name, phone, initial]);
 
   useEffect(() => {
-    // Opcional: intenta cargar datos desde Firestore si existen
     const load = async () => {
       try {
         if (!user) return;
@@ -45,12 +45,11 @@ export default function PerfilScreen() {
         if (telefono) setPhone(String(telefono));
         setInitial({ name: user.displayName ?? '', email: user.email ?? '', phone: String(telefono ?? '') });
       } catch {
-        // si no existe el doc, usamos solo los datos de auth
         setInitial({ name: user?.displayName ?? '', email: user?.email ?? '', phone: '' });
       }
     };
     load();
-  }, []);
+  }, [user?.uid]);
 
   const onSave = async () => {
     if (!user) return;
@@ -60,7 +59,6 @@ export default function PerfilScreen() {
       if ((name ?? '').trim() !== (user.displayName ?? '')) {
         await updateProfile(user, { displayName: name.trim() || undefined });
       }
-      // Persistir datos adicionales en Firestore (merge)
       await FireStoreUsuarios.registrarUsuario({ id: user.uid, nombre: name.trim(), telefono: phone.trim() });
       setInitial({ name, email, phone });
       Alert.alert('Guardado', 'Se guardaron los cambios correctamente.');
@@ -78,13 +76,13 @@ export default function PerfilScreen() {
 
   const headerRight = () => (
     <Pressable onPress={() => Alert.alert('Eliminar cuenta', 'Esta acción estará disponible pronto.', [{ text: 'OK' }])}>
-      <Text style={{ color: '#EF4444', fontWeight: '600' }}>¿Eliminar cuenta?</Text>
+      <Text style={{ color: color.danger, fontWeight: font.weight.semibold }}>¿Eliminar cuenta?</Text>
     </Pressable>
   );
 
   const headerLeft = () => (
     <Pressable onPress={() => router.back()} style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 4 }}>
-      <Ionicons name="chevron-back" size={22} color={colors.text} />
+      <Ionicons name="chevron-back" size={22} color={color.text} />
     </Pressable>
   );
 
@@ -93,79 +91,48 @@ export default function PerfilScreen() {
       <Stack.Screen options={{ title: 'Tu perfil', headerRight, headerLeft }} />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
-          style={{ flex: 1, backgroundColor: colors.background }}
+          style={{ flex: 1, backgroundColor: color.bg }}
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Nombre */}
           <View style={styles.field}>
-            <Text style={[styles.label, { color: colors.text }]}>Nombre</Text>
-            <TextInput
-              value={name}
-              onChangeText={setName}
-              placeholder="Tu nombre"
-              placeholderTextColor={Platform.select({ ios: '#9CA3AF', android: '#9CA3AF', default: '#9CA3AF' })}
-              style={[styles.input, { backgroundColor: colors.card, color: colors.text, borderColor: colors.border }]}
-              autoCapitalize="words"
-              returnKeyType="done"
-            />
+            <Text style={[styles.label, { color: color.text, fontSize: font.size.sm, fontWeight: font.weight.semibold, marginBottom: space[2] }]}>
+              Nombre
+            </Text>
+            <Input value={name} onChangeText={setName} placeholder="Tu nombre" autoCapitalize="words" returnKeyType="done" />
           </View>
 
-          {/* Email (solo lectura) */}
           <View style={styles.field}>
-            <Text style={[styles.label, { color: colors.text }]}>Correo electrónico</Text>
-            <TextInput
-              value={email}
-              editable={false}
-              style={[styles.input, { backgroundColor: colors.card, color: colors.text, borderColor: colors.border, opacity: 0.8 }]}
-            />
-            <Text style={[styles.help, { color: colors.text, opacity: 0.6 }]}>Todas las notificaciones se enviarán a este correo.</Text>
+            <Text style={[styles.label, { color: color.text, fontSize: font.size.sm, fontWeight: font.weight.semibold, marginBottom: space[2] }]}>
+              Correo electrónico
+            </Text>
+            <Input value={email} editable={false} style={{ opacity: 0.8 }} />
+            <Text style={[styles.help, { color: color.textMuted, fontSize: font.size.sm, marginTop: space[1] }]}>
+              Todas las notificaciones se enviarán a este correo.
+            </Text>
           </View>
 
-          {/* Teléfono */}
           <View style={styles.field}>
-            <Text style={[styles.label, { color: colors.text }]}>Número de teléfono</Text>
-            <TextInput
+            <Text style={[styles.label, { color: color.text, fontSize: font.size.sm, fontWeight: font.weight.semibold, marginBottom: space[2] }]}>
+              Número de teléfono
+            </Text>
+            <Input
               value={phone}
               onChangeText={setPhone}
               placeholder="Ej. +52 555 555 5555"
-              placeholderTextColor={Platform.select({ ios: '#9CA3AF', android: '#9CA3AF', default: '#9CA3AF' })}
-              style={[styles.input, { backgroundColor: colors.card, color: colors.text, borderColor: colors.border }]}
               keyboardType="phone-pad"
               returnKeyType="done"
             />
-            <Text style={[styles.help, { color: colors.text, opacity: 0.6 }]}>Todas las notificaciones y verificaciones OTP se enviarán a este número.</Text>
+            <Text style={[styles.help, { color: color.textMuted, fontSize: font.size.sm, marginTop: space[1] }]}>
+              Todas las notificaciones y verificaciones OTP se enviarán a este número.
+            </Text>
           </View>
 
-          {error ? <Text style={{ color: '#ef4444', marginBottom: 8 }}>{error}</Text> : null}
+          {error ? <Text style={{ color: color.danger, marginBottom: space[2] }}>{error}</Text> : null}
 
-          {/* Botones */}
-          <View style={styles.actions}>
-            <Pressable
-              onPress={onSave}
-              disabled={!dirty || loading}
-              style={({ pressed }) => [
-                styles.primaryBtn,
-                { opacity: !dirty || loading ? 0.6 : pressed ? 0.9 : 1, backgroundColor: '#3B82F6' },
-              ]}
-            >
-              {loading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.primaryBtnText}>Guardar cambios</Text>
-              )}
-            </Pressable>
-
-            <Pressable
-              onPress={onCancel}
-              disabled={loading}
-              style={({ pressed }) => [
-                styles.ghostBtn,
-                { borderColor: colors.border, backgroundColor: colors.card, opacity: pressed ? 0.9 : 1 },
-              ]}
-            >
-              <Text style={[styles.ghostBtnText, { color: colors.text }]}>Cancelar</Text>
-            </Pressable>
+          <View style={[styles.actions, { gap: space[2], marginTop: space[2] }]}>
+            <Button title="Guardar cambios" onPress={onSave} loading={loading} disabled={!dirty || loading} />
+            <Button title="Cancelar" variant="outline" onPress={onCancel} disabled={loading} />
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -182,45 +149,12 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   label: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 8,
     opacity: 0.9,
-  },
-  input: {
-    height: 44,
-    borderRadius: 10,
-    borderWidth: StyleSheet.hairlineWidth,
-    paddingHorizontal: 12,
   },
   help: {
     marginTop: 6,
-    fontSize: 12,
   },
   actions: {
-    gap: 10,
     marginTop: 8,
-  },
-  primaryBtn: {
-    height: 48,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  primaryBtnText: {
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: 16,
-  },
-  ghostBtn: {
-    height: 48,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: StyleSheet.hairlineWidth,
-  },
-  ghostBtnText: {
-    fontWeight: '700',
-    fontSize: 16,
   },
 });
