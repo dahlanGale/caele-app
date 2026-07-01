@@ -1,5 +1,5 @@
+import { firestore } from '@/src/lib/firebase';
 import { addDoc, collection, doc, getDocs, setDoc } from "firebase/firestore";
-import { firestore } from "../app/config/firebase";
 
 class FirestoreAdministracion {
     private sucursalSeleccionada: string | null;
@@ -17,7 +17,8 @@ class FirestoreAdministracion {
     // Método para registrar o actualizar una pyme
     async registrarPyme(data: any) {
       try {
-        const { id, ...values } = data;
+        // Nunca persistir password en Firestore (Auth ya la gestiona)
+        const { id, password: _password, ...values } = data;
         if (id) {
           // Si el id está presente, actualizamos el documento existente
           const userRef = doc(firestore, 'pymes', id);

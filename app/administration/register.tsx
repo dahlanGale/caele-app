@@ -1,3 +1,4 @@
+import { auth } from '@/src/lib/firebase';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
@@ -5,7 +6,6 @@ import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import React, { useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import FirestoreAdministracion from '../../firebase/FirestoreAdministracion';
-import { auth } from '../config/firebase';
 
 export default function RegisterScreen() {
   const [name, setName] = useState('');
@@ -33,25 +33,25 @@ export default function RegisterScreen() {
     }
     setLoading(true);
     try {
-
-      // Registrar el usuario en Firebase Auth
+      // 1. Registrar el usuario en Firebase Auth
       const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
       if (name.trim()) {
         await updateProfile(cred.user, { displayName: name.trim() });
       }
-      router.replace('/(drawer)/dashboard');
 
-      // Registrar la pyme en Firestore
+      // 2. Registrar la pyme en Firestore (antes de navegar)
       await FirestoreAdministracion.registrarPyme({
         id: cred.user.uid,
         nombre: name.trim(),
         email: email.trim(),
         fechaRegistro: new Date(),
-        password: password.trim(),
         celular: celular.trim(),
         nombreNegocio: businessName.trim(),
         isAdmin: true,
-        });
+      });
+
+      // 3. Navegar solo si todo lo anterior tuvo éxito
+      router.replace('/(drawer)/dashboard');
     } catch (e: any) {
       setError(e?.message ?? 'No se pudo crear la cuenta');
     } finally {

@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
 import { getApp, getApps, initializeApp } from 'firebase/app';
 import type { Auth } from 'firebase/auth';
 import { GoogleAuthProvider, browserLocalPersistence, getAuth, initializeAuth, setPersistence } from 'firebase/auth';
@@ -7,7 +8,7 @@ import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { Platform } from 'react-native';
 
-const firebaseConfig = {
+const firebaseConfig = Constants.expoConfig?.extra?.firebase ?? {
   apiKey: 'AIzaSyDwm6aQ-I--4O2qJq3DrWPMaXlHH7P8k4A',
   authDomain: 'caele-app.firebaseapp.com',
   projectId: 'caele-app',
@@ -27,8 +28,9 @@ const database = getDatabase(app);
 const getReactNativePersistence =
   Platform.OS === 'web'
     ? undefined
-    // @ts-ignore – require dinámico para evitar incluirlo en web
-    : require('firebase/auth').getReactNativePersistence;
+    : // @ts-ignore – require dinámico para evitar incluirlo en web
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      require('firebase/auth').getReactNativePersistence;
 
 let auth: Auth;
 if (Platform.OS === 'web') {
@@ -46,4 +48,4 @@ if (Platform.OS === 'web') {
 const googleProvider = new GoogleAuthProvider();
 
 export { app, auth, database, firestore, googleProvider, storage };
-export default function FirebaseConfigRoute() { return null; }
+

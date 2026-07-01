@@ -1,12 +1,16 @@
+import { auth, googleProvider } from '@/src/lib/firebase';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Google from 'expo-auth-session/providers/google';
+import Constants from 'expo-constants';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { GoogleAuthProvider, signInWithCredential, signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
 import React, { useMemo, useState } from 'react';
 import { Image, Platform, Pressable, StyleSheet, Text, TextInput, View, useColorScheme } from 'react-native';
-import { auth, googleProvider } from '../config/firebase';
+
+const GOOGLE_CONFIG = (Constants.expoConfig?.extra?.google ?? {}) as Record<string, string>;
+const googleNativeConfigured = !!(GOOGLE_CONFIG.expoClientId || GOOGLE_CONFIG.iosClientId || GOOGLE_CONFIG.androidClientId);
 
 // Completar la sesión del navegador (requerido por AuthSession)
 WebBrowser.maybeCompleteAuthSession();
@@ -17,13 +21,11 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Configura tus credenciales de OAuth de Google
-  // Reemplaza estos IDs por los de tu proyecto de Google Cloud
   const [request, , promptAsync] = Google.useAuthRequest({
-    clientId: 'REPLACE_WITH_EXPO_OR_DEV_CLIENT_ID',
-    iosClientId: 'REPLACE_WITH_IOS_CLIENT_ID',
-    androidClientId: 'REPLACE_WITH_ANDROID_CLIENT_ID',
-    webClientId: 'REPLACE_WITH_WEB_CLIENT_ID',
+    clientId: GOOGLE_CONFIG.expoClientId,
+    iosClientId: GOOGLE_CONFIG.iosClientId,
+    androidClientId: GOOGLE_CONFIG.androidClientId,
+    webClientId: GOOGLE_CONFIG.webClientId,
     responseType: 'id_token',
     scopes: ['openid', 'profile', 'email'],
   });
@@ -55,6 +57,9 @@ export default function LoginScreen() {
         // Web: popup nativo de Firebase
         await signInWithPopup(auth, googleProvider);
       } else {
+        if (!googleNativeConfigured) {
+          throw new Error('El inicio de sesión con Google no está configurado para esta plataforma.');
+        }
         // iOS/Android: usar AuthSession para obtener el idToken y autenticar en Firebase
         const result = await promptAsync();
         if (result.type !== 'success') {
@@ -144,6 +149,24 @@ export default function LoginScreen() {
                 <Text style={styles.outlineBtnText}>Crear cuenta</Text>
               </Pressable>
 
+              {(Platform.OS === 'web' || googleNativeConfigured) && (
+                <>
+                  <View style={styles.separatorRow}>
+                    <View style={[styles.separator, { backgroundColor: dark ? '#374151' : '#E5E7EB' }]} />
+                    <Text style={{ color: dark ? '#9CA3AF' : '#6B7280', fontSize: 12 }}>o</Text>
+                    <View style={[styles.separator, { backgroundColor: dark ? '#374151' : '#E5E7EB' }]} />
+                  </View>
+                  <Pressable onPress={onGoogle} disabled={loading || !request} style={({ pressed }) => [
+                    styles.outlineBtn,
+                    pressed && styles.btnPressed,
+                    loading && styles.btnDisabled,
+                  ]}>
+                    <MaterialCommunityIcons name="google" size={18} color={dark ? '#F3F4F6' : '#111827'} />
+                    <Text style={[styles.outlineBtnText, { marginLeft: 8 }]}>Continuar con Google</Text>
+                  </Pressable>
+                </>
+              )}
+
               <Text style={styles.helperText}>¿No tienes acceso? Contacta al administrador para obtener credenciales.</Text>
             </View>
           </View>
@@ -232,6 +255,8 @@ const createStyles = (dark: boolean) => StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 14,
     alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
     backgroundColor: dark ? '#111827' : '#fff',
   },
   outlineBtnText: {

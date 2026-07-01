@@ -1,20 +1,11 @@
 import { Redirect } from 'expo-router';
-import { onAuthStateChanged, User } from 'firebase/auth';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { ActivityIndicator, View } from 'react-native';
-import { auth } from './config/firebase';
+
+import { useAuth } from '@/src/context/AuthContext';
 
 export default function RootIndex() {
-  const [initializing, setInitializing] = useState(true);
-  const [user, setUser] = useState<User | null>(null);
-
-  useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (u) => {
-      setUser(u);
-      setInitializing(false);
-    });
-    return unsub;
-  }, []);
+  const { user, initializing } = useAuth();
 
   if (initializing) {
     return (

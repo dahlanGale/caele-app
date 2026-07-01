@@ -1,5 +1,5 @@
+import { auth, firestore } from '@/src/lib/firebase';
 import { collection, doc, getDoc, getDocs, query, setDoc, where } from 'firebase/firestore';
-import { auth, firestore } from '../app/config/firebase';
 
 class FirestoreRestaurante {
   // Obtiene el id de la pyme a partir del correo

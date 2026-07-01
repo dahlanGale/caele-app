@@ -1,22 +1,22 @@
 import FireStoreUsuarios from '@/firebase/FirestoreUsuarios';
+import { auth } from '@/src/lib/firebase';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@react-navigation/native';
 import { Stack, router } from 'expo-router';
 import { updateProfile } from 'firebase/auth';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
+    ActivityIndicator,
+    Alert,
+    KeyboardAvoidingView,
+    Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    View,
 } from 'react-native';
-import { auth } from '../config/firebase';
 
 export default function PerfilScreen() {
   const { colors } = useTheme();

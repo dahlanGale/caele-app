@@ -1,3 +1,4 @@
+import { auth } from '@/src/lib/firebase';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { DrawerContentScrollView, DrawerItem, DrawerItemList, DrawerToggleButton } from '@react-navigation/drawer';
 import { useTheme } from '@react-navigation/native';
@@ -6,7 +7,6 @@ import { Drawer } from 'expo-router/drawer';
 import { signOut } from 'firebase/auth';
 import React from 'react';
 import { View } from 'react-native';
-import { auth } from '../config/firebase';
 
 function CustomDrawerContent(props: any) {
   const { colors, dark } = useTheme();

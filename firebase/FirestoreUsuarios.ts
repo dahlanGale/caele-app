@@ -1,14 +1,14 @@
+import { firestore } from '@/src/lib/firebase';
 import {
-  addDoc,
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  query,
-  setDoc,
-  where
+    addDoc,
+    collection,
+    doc,
+    getDoc,
+    getDocs,
+    query,
+    setDoc,
+    where
 } from 'firebase/firestore';
-import { firestore } from '../app/config/firebase';
   
   class FireStoreUsuarios {
     

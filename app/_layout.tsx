@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { AuthProvider } from '@/src/context/AuthContext';
 
 // Tema claro 
 const LightTheme = {
@@ -46,16 +47,18 @@ export default function RootLayout() {
   const theme = colorScheme === 'dark' ? DarkThemeCustom : LightTheme;
 
   return (
-    <ThemeProvider value={theme}>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(drawer)" />
-        <Stack.Screen name="perfil" />
-        <Stack.Screen name="administration" />
-        <Stack.Screen name="login" />
-        <Stack.Screen name="register" />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-    </ThemeProvider>
+    <AuthProvider>
+      <ThemeProvider value={theme}>
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="(drawer)" />
+          <Stack.Screen name="perfil" />
+          <Stack.Screen name="administration" />
+          <Stack.Screen name="login" />
+          <Stack.Screen name="register" />
+          <Stack.Screen name="+not-found" />
+        </Stack>
+        <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+      </ThemeProvider>
+    </AuthProvider>
   );
 }
