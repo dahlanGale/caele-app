@@ -28,11 +28,25 @@ export function PymeProvider({ children }: { children: React.ReactNode }) {
 
     pymeCollection
       .get('', uid)
-      .then((doc) => {
+      .then(async (doc) => {
         if (doc) {
           setPyme(doc as Pyme);
+          setLoading(false);
+          return;
         }
-        setLoading(false);
+        // Si no existe la pyme (por ejemplo, fue borrada), la recreamos automáticamente.
+        const defaultPyme: Omit<Pyme, 'id'> = {
+          email: user?.email ?? '',
+          nombre: user?.displayName ?? '',
+        };
+        try {
+          await pymeCollection.set('', uid, defaultPyme);
+          setPyme({ id: uid, ...defaultPyme });
+        } catch {
+          setPyme(null);
+        } finally {
+          setLoading(false);
+        }
       })
       .catch(() => setLoading(false));
   }, [uid, initializing]);
