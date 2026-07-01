@@ -21,7 +21,7 @@ export const TIPOS_DISTRIBUCION: {
   { key: 'personalizado', label: 'Personalizado', descripcion: 'Empieza en blanco y crea tus propias zonas.' },
 ];
 
-const DEFAULT_PISO = 'Piso 1';
+const DEFAULT_PISO = 'Planta Baja';
 
 function zona(
   nombre: string,

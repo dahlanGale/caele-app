@@ -24,6 +24,7 @@ import { useAppTheme } from '@/src/theme/ThemeProvider';
 import type { ConfiguracionZona, ElementoForma, TipoDistribucion } from '@/src/types';
 
 const CAPACIDADES = [2, 4, 6, 8];
+const TOTAL_STEPS = 6;
 
 export default function MesasWizardScreen() {
   const { color, space, radius, font } = useAppTheme();
@@ -31,6 +32,7 @@ export default function MesasWizardScreen() {
   const [step, setStep] = useState(1);
   const [nombreNegocio, setNombreNegocio] = useState(pyme?.nombreNegocio ?? pyme?.nombre ?? '');
   const [tipo, setTipo] = useState<TipoDistribucion>('restaurante');
+  const [pisos, setPisos] = useState<string[]>(['Piso 1']);
   const [zonas, setZonas] = useState<ConfiguracionZona[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -38,17 +40,39 @@ export default function MesasWizardScreen() {
 
   const aplicarPlantilla = (key: string) => {
     const plantilla = PLANTILLAS.find((p) => p.key === key);
-    if (plantilla) {
-      setZonas(plantilla.zonas.map((z, i) => ({ ...z, nombre: z.nombre })));
+    if (!plantilla) return;
+    const pisosPlantilla = Array.from(new Set(plantilla.zonas.map((z) => z.piso)));
+    if (pisosPlantilla.length > 0) setPisos(pisosPlantilla);
+    setZonas(plantilla.zonas.map((z) => ({ ...z })));
+  };
+
+  const addPiso = () => {
+    setPisos((prev) => [...prev, `Piso ${prev.length + 1}`]);
+  };
+
+  const updatePiso = (idx: number, value: string) => {
+    const old = pisos[idx];
+    setPisos((prev) => prev.map((p, i) => (i === idx ? value : p)));
+    if (old && value !== old) {
+      setZonas((prev) => prev.map((z) => (z.piso === old ? { ...z, piso: value } : z)));
     }
   };
 
+  const removePiso = (idx: number) => {
+    const piso = pisos[idx];
+    if (pisos.length <= 1) {
+      Alert.alert('Debes tener al menos un piso');
+      return;
+    }
+    const pisoDefault = pisos[0] === piso ? pisos[1] : pisos[0];
+    setPisos((prev) => prev.filter((_, i) => i !== idx));
+    setZonas((prev) => prev.map((z) => (z.piso === piso ? { ...z, piso: pisoDefault } : z)));
+  };
+
   const addZona = () => {
-    const pisosUnicos = Array.from(new Set(zonas.map((z) => z.piso).filter(Boolean)));
-    const pisoDefault = pisosUnicos[0] ?? 'Piso 1';
     setZonas((prev) => [
       ...prev,
-      { nombre: `Zona ${prev.length + 1}`, piso: pisoDefault, cantidadMesas: 4, forma: 'redonda', capacidad: 4 },
+      { nombre: `Zona ${prev.length + 1}`, piso: pisos[0] ?? 'Piso 1', cantidadMesas: 4, forma: 'redonda', capacidad: 4 },
     ]);
   };
 
@@ -61,7 +85,14 @@ export default function MesasWizardScreen() {
   };
 
   const generar = async () => {
-    if (!pyme) return;
+    if (!pyme) {
+      Alert.alert('Error', 'No hay una sesión activa.');
+      return;
+    }
+    if (pisos.length === 0) {
+      Alert.alert('Agrega al menos un piso');
+      return;
+    }
     if (zonas.length === 0) {
       Alert.alert('Agrega al menos una zona');
       return;
@@ -89,7 +120,7 @@ export default function MesasWizardScreen() {
               Configura tu restaurante
             </Text>
             <Text style={[styles.subtitle, { color: color.textMuted, fontSize: font.size.base }]}>
-              Paso 1 de 5: ¿cómo se llama tu negocio?
+              Paso 1 de {TOTAL_STEPS}: ¿cómo se llama tu negocio?
             </Text>
             <TextInput
               value={nombreNegocio}
@@ -107,7 +138,7 @@ export default function MesasWizardScreen() {
               Tipo de distribución
             </Text>
             <Text style={[styles.subtitle, { color: color.textMuted, fontSize: font.size.base }]}>
-              Paso 2 de 5: selecciona el tipo de espacio.
+              Paso 2 de {TOTAL_STEPS}: selecciona el tipo de espacio.
             </Text>
             <View style={{ gap: space[3] }}>
               {TIPOS_DISTRIBUCION.map((t) => {
@@ -138,10 +169,42 @@ export default function MesasWizardScreen() {
         return (
           <View style={{ gap: space[4] }}>
             <Text style={[styles.title, { color: color.text, fontSize: font.size.xl, fontWeight: font.weight.bold }]}>
+              Pisos / Plantas
+            </Text>
+            <Text style={[styles.subtitle, { color: color.textMuted, fontSize: font.size.base }]}>
+              Paso 3 de {TOTAL_STEPS}: define los pisos o plantas del restaurante. Las zonas se asignarán a estos pisos.
+            </Text>
+            <View style={{ gap: space[3] }}>
+              {pisos.map((p, idx) => (
+                <View
+                  key={idx}
+                  style={[
+                    styles.pisoCard,
+                    { backgroundColor: color.bgElevated, borderColor: color.border, borderRadius: radius.md },
+                  ]}
+                >
+                  <TextInput
+                    value={p}
+                    onChangeText={(v) => updatePiso(idx, v)}
+                    style={[styles.pisoInput, { color: color.text, borderColor: color.border }]}
+                  />
+                  <Pressable onPress={() => removePiso(idx)} style={{ padding: space[2] }}>
+                    <Ionicons name="trash-outline" size={20} color={color.danger} />
+                  </Pressable>
+                </View>
+              ))}
+            </View>
+            <Button title="+ Agregar piso" variant="outline" onPress={addPiso} />
+          </View>
+        );
+      case 4:
+        return (
+          <View style={{ gap: space[4] }}>
+            <Text style={[styles.title, { color: color.text, fontSize: font.size.xl, fontWeight: font.weight.bold }]}>
               Zonas
             </Text>
             <Text style={[styles.subtitle, { color: color.textMuted, fontSize: font.size.base }]}>
-              Paso 3 de 5: agrega o elimina zonas. Puedes usar una plantilla como punto de partida.
+              Paso 4 de {TOTAL_STEPS}: agrega zonas y asígnalas a un piso. Puedes usar una plantilla como punto de partida.
             </Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[2] }}>
               {plantillas.map((p) => (
@@ -164,11 +227,13 @@ export default function MesasWizardScreen() {
                   />
                   <View style={{ flexDirection: 'row', gap: space[2], alignItems: 'center', marginBottom: space[2] }}>
                     <Text style={{ color: color.textMuted, fontSize: font.size.sm }}>Piso</Text>
-                    <TextInput
-                      value={z.piso}
-                      onChangeText={(v) => updateZona(idx, { piso: v })}
-                      style={[styles.zonaInput, { color: color.text, borderColor: color.border, flex: 1 }]}
-                    />
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                      <View style={{ flexDirection: 'row', gap: space[2] }}>
+                        {pisos.map((p) => (
+                          <Chip key={p} label={p} active={z.piso === p} onPress={() => updateZona(idx, { piso: p })} />
+                        ))}
+                      </View>
+                    </ScrollView>
                   </View>
                   <View style={{ flexDirection: 'row', gap: space[2], alignItems: 'center' }}>
                     <Text style={{ color: color.textMuted, fontSize: font.size.sm }}>Mesas</Text>
@@ -188,20 +253,20 @@ export default function MesasWizardScreen() {
             <Button title="+ Agregar zona" variant="outline" onPress={addZona} />
           </View>
         );
-      case 4:
+      case 5:
         return (
           <View style={{ gap: space[4] }}>
             <Text style={[styles.title, { color: color.text, fontSize: font.size.xl, fontWeight: font.weight.bold }]}>
               Detalles por zona
             </Text>
             <Text style={[styles.subtitle, { color: color.textMuted, fontSize: font.size.base }]}>
-              Paso 4 de 5: forma y capacidad de cada zona.
+              Paso 5 de {TOTAL_STEPS}: forma y capacidad de cada zona.
             </Text>
             <View style={{ gap: space[4] }}>
               {zonas.map((z, idx) => (
                 <View key={idx} style={[styles.zonaCard, { backgroundColor: color.bgElevated, borderColor: color.border, borderRadius: radius.md }]}>
                   <Text style={{ color: color.text, fontWeight: font.weight.semibold, marginBottom: space[2] }}>
-                    {z.nombre}
+                    {z.nombre} · {z.piso}
                   </Text>
                   <Text style={{ color: color.textMuted, fontSize: font.size.sm, marginBottom: space[2] }}>Forma</Text>
                   <View style={{ flexDirection: 'row', gap: space[2], marginBottom: space[3] }}>
@@ -235,22 +300,31 @@ export default function MesasWizardScreen() {
             </View>
           </View>
         );
-      case 5:
+      case 6:
         return (
           <View style={{ gap: space[4] }}>
             <Text style={[styles.title, { color: color.text, fontSize: font.size.xl, fontWeight: font.weight.bold }]}>
               ¡Listo!
             </Text>
             <Text style={[styles.subtitle, { color: color.textMuted, fontSize: font.size.base }]}>
-              Paso 5 de 5: vamos a generar {zonas.reduce((acc, z) => acc + z.cantidadMesas, 0)} mesas en {zonas.length} zonas.
+              Paso 6 de {TOTAL_STEPS}: vamos a generar {zonas.reduce((acc, z) => acc + z.cantidadMesas, 0)} mesas en {zonas.length} zonas y {pisos.length} pisos.
             </Text>
             <View style={[styles.summary, { backgroundColor: color.bgElevated, borderColor: color.border, borderRadius: radius.md }]}>
-              {zonas.map((z, i) => (
-                <View key={i} style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: space[2] }}>
-                  <Text style={{ color: color.text }}>{z.nombre}</Text>
-                  <Text style={{ color: color.textMuted }}>
-                    {z.piso} · {z.cantidadMesas} mesas · {z.capacidad} pax · {z.forma}
+              {pisos.map((piso) => (
+                <View key={piso} style={{ marginBottom: space[4] }}>
+                  <Text style={{ color: color.text, fontWeight: font.weight.bold, marginBottom: space[2] }}>
+                    {piso}
                   </Text>
+                  {zonas
+                    .filter((z) => z.piso === piso)
+                    .map((z, i) => (
+                      <View key={i} style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: space[2] }}>
+                        <Text style={{ color: color.text }}>{z.nombre}</Text>
+                        <Text style={{ color: color.textMuted }}>
+                          {z.cantidadMesas} mesas · {z.capacidad} pax · {z.forma}
+                        </Text>
+                      </View>
+                    ))}
                 </View>
               ))}
             </View>
@@ -262,12 +336,13 @@ export default function MesasWizardScreen() {
 
   const canNext = () => {
     if (step === 1) return nombreNegocio.trim().length > 0;
-    if (step === 3 || step === 4 || step === 5) return zonas.length > 0;
+    if (step === 3) return pisos.length > 0 && pisos.every((p) => p.trim().length > 0);
+    if (step === 4 || step === 5 || step === 6) return zonas.length > 0;
     return true;
   };
 
   const next = () => {
-    if (step < 5) setStep((s) => s + 1);
+    if (step < TOTAL_STEPS) setStep((s) => s + 1);
     else generar();
   };
 
@@ -277,7 +352,7 @@ export default function MesasWizardScreen() {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView style={{ flex: 1, backgroundColor: color.bg }} contentContainerStyle={styles.content}>
           <View style={styles.steps}>
-            {[1, 2, 3, 4, 5].map((s) => (
+            {Array.from({ length: TOTAL_STEPS }, (_, i) => i + 1).map((s) => (
               <View
                 key={s}
                 style={[
@@ -292,7 +367,7 @@ export default function MesasWizardScreen() {
           {renderStep()}
           <View style={[styles.footer, { gap: space[3], marginTop: space[6] }]}>
             <Button title="Atrás" variant="outline" onPress={() => setStep((s) => Math.max(1, s - 1))} disabled={step === 1 || loading} />
-            <Button title={step === 5 ? 'Generar distribución' : 'Siguiente'} onPress={next} disabled={!canNext() || loading} />
+            <Button title={step === TOTAL_STEPS ? 'Generar distribución' : 'Siguiente'} onPress={next} disabled={!canNext() || loading} />
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -333,6 +408,19 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     gap: 4,
+  },
+  pisoCard: {
+    borderWidth: 1,
+    padding: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  pisoInput: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 10,
+    flex: 1,
   },
   zonaCard: {
     borderWidth: 1,

@@ -39,6 +39,8 @@ export default function MesasEditorScreen() {
   const [dragMode, setDragMode] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [pisos, setPisos] = useState<string[]>([]);
+  const [managingPisos, setManagingPisos] = useState(false);
 
   useEffect(() => {
     if (!pyme) return;
@@ -49,7 +51,10 @@ export default function MesasEditorScreen() {
       sorted.forEach((z) => {
         const unsubEl = elementosCollection(pyme.id, z.id).subscribe(pyme.id, (els) => {
           map.set(z.id, els);
-          setZonas(sorted.map((z2) => ({ ...z2, elementos: map.get(z2.id) ?? [] })));
+          const nextZonas = sorted.map((z2) => ({ ...z2, elementos: map.get(z2.id) ?? [] }));
+          setZonas(nextZonas);
+          const uniquePisos = Array.from(new Set(nextZonas.map((z2) => z2.piso).filter(Boolean)));
+          setPisos((prev) => (prev.length === 0 ? uniquePisos : prev));
         });
         unsubs.push(unsubEl);
       });
@@ -70,8 +75,32 @@ export default function MesasEditorScreen() {
     [zonas, selectedElementoId]
   );
 
+  const addPiso = () => {
+    setPisos((prev) => [...prev, `Piso ${prev.length + 1}`]);
+  };
+
+  const updatePiso = (idx: number, value: string) => {
+    const old = pisos[idx];
+    if (!old) return;
+    setPisos((prev) => prev.map((p, i) => (i === idx ? value : p)));
+    if (value !== old) {
+      setZonas((prev) => prev.map((z) => (z.piso === old ? { ...z, piso: value } : z)));
+    }
+  };
+
+  const removePiso = (idx: number) => {
+    const piso = pisos[idx];
+    if (!piso) return;
+    if (pisos.length <= 1) {
+      Alert.alert('Debes tener al menos un piso');
+      return;
+    }
+    const fallback = pisos[0] === piso ? pisos[1] : pisos[0];
+    setPisos((prev) => prev.filter((_, i) => i !== idx));
+    setZonas((prev) => prev.map((z) => (z.piso === piso ? { ...z, piso: fallback ?? 'Piso 1' } : z)));
+  };
+
   const addZona = () => {
-    const pisos = Array.from(new Set(zonas.map((z) => z.piso).filter(Boolean)));
     const pisoDefault = pisos[0] ?? 'Piso 1';
     const name = `Zona ${zonas.length + 1}`;
     setZonas((prev) => [
@@ -347,11 +376,33 @@ export default function MesasEditorScreen() {
                   {selectedZona?.nombre}
                 </Text>
                 <Text style={{ color: color.textMuted, fontSize: font.size.sm }}>Piso</Text>
-                <TextInput
-                  value={selectedZona?.piso ?? 'Piso 1'}
-                  onChangeText={(v) => updateZona({ piso: v })}
-                  style={[styles.input, { color: color.text, borderColor: color.border, backgroundColor: color.bg }]}
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[2] }}>
+                  {pisos.map((p) => (
+                    <Chip key={p} label={p} active={selectedZona?.piso === p} onPress={() => updateZona({ piso: p })} />
+                  ))}
+                </View>
+                <Button
+                  title={managingPisos ? 'Ocultar pisos' : 'Administrar pisos'}
+                  variant="ghost"
+                  onPress={() => setManagingPisos((v) => !v)}
                 />
+                {managingPisos && (
+                  <View style={{ gap: space[2] }}>
+                    {pisos.map((p, idx) => (
+                      <View key={idx} style={{ flexDirection: 'row', gap: space[2], alignItems: 'center' }}>
+                        <TextInput
+                          value={p}
+                          onChangeText={(v) => updatePiso(idx, v)}
+                          style={[styles.input, { color: color.text, borderColor: color.border, backgroundColor: color.bg, flex: 1 }]}
+                        />
+                        <Pressable onPress={() => removePiso(idx)} style={{ padding: space[2] }}>
+                          <Ionicons name="trash-outline" size={20} color={color.danger} />
+                        </Pressable>
+                      </View>
+                    ))}
+                    <Button title="+ Agregar piso" variant="outline" onPress={addPiso} />
+                  </View>
+                )}
                 <Text style={[styles.panelTitle, { color: color.text, fontWeight: font.weight.semibold }]}>
                   Paleta de elementos
                 </Text>
