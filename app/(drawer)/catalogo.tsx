@@ -3,11 +3,11 @@ import { Platform, ScrollView, StyleSheet, Text, View, useWindowDimensions } fro
 
 import { Chip } from '@/src/components/ui';
 import { useAppTheme } from '@/src/theme/ThemeProvider';
+import TableArticulos from '../../components/catalogo/articulos/TableArticulos';
 import TableCategorias from '../../components/catalogo/categorias/TableCategorias';
 import TableInsumos from '../../components/catalogo/insumos/TableInsumos';
-import TableProductos from '../../components/catalogo/productos/TableProductos';
 
-export type CatalogTab = 'Productos' | 'Ingredientes' | 'Categorías' | 'Multivariante';
+export type CatalogTab = 'Artículos' | 'Ingredientes' | 'Categorías';
 
 const CONTENT_MAX_W = 1000;
 
@@ -17,14 +17,14 @@ export default function CatalogoScreen() {
   const isWide = width >= 1000;
   const isWeb = Platform.OS === 'web';
 
-  const TABS: CatalogTab[] = ['Productos', 'Ingredientes', 'Categorías'];
-  const [active, setActive] = useState<CatalogTab>('Productos');
+  const TABS: CatalogTab[] = ['Artículos', 'Ingredientes', 'Categorías'];
+  const [active, setActive] = useState<CatalogTab>('Artículos');
   const chipSpacing = isWeb || isWide ? 8 : 10;
 
   const Content = useMemo(() => {
     switch (active) {
-      case 'Productos':
-        return <TableProductos />;
+      case 'Artículos':
+        return <TableArticulos />;
       case 'Ingredientes':
         return <TableInsumos />;
       case 'Categorías':
@@ -50,7 +50,7 @@ export default function CatalogoScreen() {
           Catálogo
         </Text>
         <Text style={{ color: color.textMuted, fontSize: font.size.sm, textAlign: isWeb || isWide ? 'center' : 'left' }}>
-          Administra productos, ingredientes y categorías
+          Administra artículos, ingredientes y categorías
         </Text>
       </View>
 

@@ -9,6 +9,14 @@ import { ordenesCollection } from '@/src/services/firestore';
 import { useAppTheme } from '@/src/theme/ThemeProvider';
 import type { Orden } from '@/src/types';
 
+/** Convierte un valor de Firestore (Timestamp | Date | string | number) a Date. */
+function toDate(value: any): Date {
+  if (!value) return new Date(0);
+  if (value instanceof Date) return value;
+  if (typeof value?.toDate === 'function') return value.toDate();
+  return new Date(value);
+}
+
 export default function DashboardScreen() {
   const { color, space, radius, font } = useAppTheme();
   const { pyme } = usePyme();
@@ -20,7 +28,7 @@ export default function DashboardScreen() {
   const stats = useMemo(() => {
     const ordenesPagadas = (ordenes as Orden[]).filter((o) => o.estado === 'pagada');
     const ventasHoy = ordenesPagadas
-      .filter((o) => new Date(o.createdAt).toDateString() === today)
+      .filter((o) => toDate(o.createdAt).toDateString() === today)
       .reduce((acc, o) => acc + o.total, 0);
     const abiertas = (ordenes as Orden[]).filter((o) => o.estado === 'abierta').length;
     const totalVentas = ordenesPagadas.reduce((acc, o) => acc + o.total, 0);

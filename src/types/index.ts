@@ -89,6 +89,27 @@ export type ConfiguracionZona = {
 
 
 
+// --- Artículos (catálogo POS) ---
+
+export type Articulo = {
+  id: string;
+  nombre: string;
+  descripcion?: string;
+  categoriaId?: string;
+  precio: number; // IVA incluido
+  descuento?: number; // porcentaje 0-100
+  imagen?: string;
+  stock?: number;
+  codigoBarras?: string; // UPC / código de barras para escaneo
+  unidadVenta?: string; // ej. 'pz', 'kg'
+  activo?: boolean;
+  fechaRegistro?: Date;
+};
+
+// --- Orden / venta ---
+
+export type MetodoPago = 'efectivo' | 'tarjeta' | 'transferencia' | 'pendiente';
+
 export type ItemOrden = {
   productoId: string;
   cantidad: number;
@@ -104,8 +125,89 @@ export type Orden = {
   impuestos: number;
   total: number;
   estado: 'abierta' | 'pagada' | 'cancelada';
+  metodoPago?: MetodoPago;
+  montoRecibido?: number;
+  cambio?: number;
+  terminalId?: string;
+  corteId?: string;
+  codigoVenta?: string;
   createdAt: Date;
   updatedAt: Date;
+};
+
+// Datos de pago capturados en el ModalPago
+export type PaymentData = {
+  metodoPago: MetodoPago;
+  montoRecibido?: number;
+  cambio?: number;
+};
+
+// --- Registro de máquina / terminal ---
+
+export type TipoMaquina = 'punto_de_venta' | 'administrativo';
+
+export type DeviceInfo = {
+  machineId: string;
+  modelo?: string;
+  marca?: string;
+  so?: string; // sistema operativo
+  installationId?: string;
+};
+
+export type SesionTerminal = {
+  fechaInicio: Date;
+  activa: boolean;
+  usuarioNombre?: string;
+};
+
+export type Terminal = {
+  id: string; // = machineId
+  nombreEquipo: string;
+  tipoMaquina: TipoMaquina;
+  device: DeviceInfo;
+  usuarioRegistro?: { uid: string; email?: string };
+  activa: boolean;
+  fechaRegistro?: Date;
+  ultimaSesion?: Date;
+  logSesion?: Record<string, SesionTerminal>;
+};
+
+// --- Cortes de caja ---
+
+export type RetiroCaja = {
+  id: string;
+  monto: number;
+  motivo: string;
+  fecha: Date;
+};
+
+export type EstatusCorte = 'Activo' | 'Cerrado' | 'Pendiente';
+
+export type CorteTotales = {
+  efectivo: number;
+  tarjeta: number;
+  transferencia: number;
+  pendiente: number;
+  ventas: number;
+  retiros: number;
+};
+
+export type Corte = {
+  id: string;
+  usuarioId: string;
+  usuarioNombre?: string;
+  terminalId: string;
+  fechaInicio: Date;
+  fechaCierre?: Date;
+  efectivoInicial: number; // fondo de caja
+  totales: CorteTotales;
+  ventas: { id: string; hora: Date; metodoPago: MetodoPago; monto: number }[];
+  retiros: RetiroCaja[];
+  estatus: EstatusCorte;
+  efectivoEsperado?: number;
+  efectivoFinal?: number;
+  diferencia?: number;
+  observaciones?: string;
 };
 
 export type Usuario = {

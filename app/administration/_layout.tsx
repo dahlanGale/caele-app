@@ -16,6 +16,7 @@ export default function AdministrationLayout() {
     >
       <Stack.Screen name="login" />
       <Stack.Screen name="register" />
+      <Stack.Screen name="registro-equipo" />
       <Stack.Screen name="perfil" />
       <Stack.Screen name="ajustes" />
       <Stack.Screen name="mesas-wizard" />

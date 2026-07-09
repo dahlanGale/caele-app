@@ -2,12 +2,13 @@ import { auth } from '@/src/lib/firebase';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { DrawerContentScrollView, DrawerItem, DrawerItemList, DrawerToggleButton } from '@react-navigation/drawer';
 import { useTheme } from '@react-navigation/native';
-import { router } from 'expo-router';
+import { Redirect, router } from 'expo-router';
 import { Drawer } from 'expo-router/drawer';
 import { signOut } from 'firebase/auth';
 import React from 'react';
-import { View } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
 
+import { useTerminal } from '@/src/hooks/useTerminal';
 import { useAppTheme } from '@/src/theme/ThemeProvider';
 
 
@@ -49,6 +50,21 @@ function CustomDrawerContent(props: any) {
 export default function DrawerLayout() {
   const { colors, dark } = useTheme();
   const { color } = useAppTheme();
+  const { terminal, loading: terminalLoading } = useTerminal();
+
+  // Gate: exige registrar la terminal antes de usar la app.
+  if (terminalLoading) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: color.bg }}>
+        <ActivityIndicator color={color.accent} />
+      </View>
+    );
+  }
+  if (!terminal) {
+    return <Redirect href="/administration/registro-equipo" />;
+  }
+
+  const isPOS = terminal.tipoMaquina === 'punto_de_venta';
 
   return (
     <Drawer
@@ -71,10 +87,38 @@ export default function DrawerLayout() {
       }}
       drawerContent={(props) => <CustomDrawerContent {...props} />}
     >
-      <Drawer.Screen name="dashboard" options={{ title: 'Inicio' }} />
-      <Drawer.Screen name="catalogo" options={{ title: 'Catálogo' }} />
-      <Drawer.Screen name="orden" options={{ title: 'Orden' }} />
-      <Drawer.Screen name="mesas" options={{ title: 'Mesas' }} />
+      <Drawer.Screen
+        name="dashboard"
+        options={{ title: 'Inicio', drawerIcon: ({ color: c, size }) => <MaterialCommunityIcons name="view-dashboard-outline" size={size} color={c} /> }}
+      />
+      <Drawer.Screen
+        name="catalogo"
+        options={{ title: 'Catálogo', drawerIcon: ({ color: c, size }) => <MaterialCommunityIcons name="tag-multiple-outline" size={size} color={c} /> }}
+      />
+      <Drawer.Screen
+        name="orden"
+        options={{ title: 'Orden', drawerIcon: ({ color: c, size }) => <MaterialCommunityIcons name="cart-outline" size={size} color={c} /> }}
+      />
+      <Drawer.Screen
+        name="mesas"
+        options={{ title: 'Mesas', drawerIcon: ({ color: c, size }) => <MaterialCommunityIcons name="table-furniture" size={size} color={c} /> }}
+      />
+      <Drawer.Screen
+        name="estado-cajon"
+        options={{
+          title: 'Estado de cajón',
+          drawerIcon: ({ color: c, size }) => <MaterialCommunityIcons name="cash-register" size={size} color={c} />,
+          drawerItemStyle: isPOS ? undefined : { display: 'none' },
+        }}
+      />
+      <Drawer.Screen
+        name="corte-final"
+        options={{
+          title: 'Corte final',
+          drawerIcon: ({ color: c, size }) => <MaterialCommunityIcons name="file-document-outline" size={size} color={c} />,
+          drawerItemStyle: isPOS ? undefined : { display: 'none' },
+        }}
+      />
     </Drawer>
   );
 }

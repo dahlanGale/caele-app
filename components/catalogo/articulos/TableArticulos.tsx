@@ -1,0 +1,258 @@
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
+import React, { useMemo, useState } from 'react';
+import { Alert, FlatList, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
+
+import { Chip, EmptyState, SkeletonRow } from '@/src/components/ui';
+import { usePyme } from '@/src/context/PymeContext';
+import { useFirestoreCollection } from '@/src/hooks/useFirestore';
+import { articulosCollection, categoriasCollection } from '@/src/services/firestore';
+import type { WithId } from '@/src/services/firestore';
+import { useAppTheme } from '@/src/theme/ThemeProvider';
+import type { Articulo } from '@/src/types';
+import ArticuloFormModal, { type ArticuloFormValues } from './ArticuloFormModal';
+
+const MIN_TABLE_W = 900;
+const CONTENT_MAX_W = 1000;
+
+export default function TableArticulos() {
+  const { color, space, radius, font } = useAppTheme();
+  const { pyme } = usePyme();
+  const [query, setQuery] = useState('');
+  const [category, setCategory] = useState<string>('');
+  const { width } = useWindowDimensions();
+  const isWide = width >= 1000;
+  const isWeb = Platform.OS === 'web';
+  const PAGE_PADDING = 16;
+  const containerWidth = (isWeb || isWide) ? Math.min(width - PAGE_PADDING * 2, CONTENT_MAX_W) : width - PAGE_PADDING * 2;
+  const sidePad = Math.max(0, (containerWidth - MIN_TABLE_W) / 2);
+
+  const { items, loading } = useFirestoreCollection(articulosCollection);
+  const { items: categories } = useFirestoreCollection(categoriasCollection);
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState<WithId<Articulo> | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const categoryMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const c of categories) map[c.id] = c.nombre;
+    return map;
+  }, [categories]);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return (items as WithId<Articulo>[]).filter((p) => {
+      const matchesQuery = !q || p.nombre.toLowerCase().includes(q) || (p.codigoBarras ?? '').toLowerCase().includes(q);
+      const matchesCategory = !category || p.categoriaId === category;
+      return matchesQuery && matchesCategory;
+    });
+  }, [items, query, category]);
+
+  const categoryName = (id?: string) => (id ? categoryMap[id] ?? id : '—');
+  const money = (n: number) => `$${n.toFixed(2)}`;
+
+  const openCreate = () => {
+    setEditing(null);
+    setModalOpen(true);
+  };
+  const openEdit = (a: WithId<Articulo>) => {
+    setEditing(a);
+    setModalOpen(true);
+  };
+
+  const handleSubmit = async (values: ArticuloFormValues) => {
+    if (!pyme) return;
+    setSaving(true);
+    try {
+      if (editing) {
+        await articulosCollection.update(pyme.id, editing.id, values as any);
+      } else {
+        await articulosCollection.create(pyme.id, { ...values, activo: true, fechaRegistro: new Date() } as any);
+      }
+      setModalOpen(false);
+      setEditing(null);
+    } catch (e: any) {
+      Alert.alert('Error', e?.message ?? 'No se pudo guardar el artículo.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCreateCategoria = async (nombre: string): Promise<string> => {
+    if (!pyme) throw new Error('No hay pyme activa.');
+    return categoriasCollection.create(pyme.id, { nombre, activa: true } as any);
+  };
+
+  const confirmDelete = (a: WithId<Articulo>) => {
+    const doDelete = async () => {
+      if (!pyme) return;
+      try {
+        await articulosCollection.delete(pyme.id, a.id);
+      } catch (e: any) {
+        Alert.alert('Error', e?.message ?? 'No se pudo eliminar.');
+      }
+    };
+    if (Platform.OS === 'web') {
+      // eslint-disable-next-line no-alert
+      if (typeof window !== 'undefined' && window.confirm(`¿Eliminar "${a.nombre}"?`)) doDelete();
+    } else {
+      Alert.alert('Eliminar artículo', `¿Eliminar "${a.nombre}"?`, [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Eliminar', style: 'destructive', onPress: doDelete },
+      ]);
+    }
+  };
+
+  return (
+    <View style={{ flex: 1 }}>
+      <View style={{ width: '100%', alignItems: 'center' }}>
+        <View style={[styles.toolbar, { width: '100%', maxWidth: MIN_TABLE_W, marginBottom: space[3] }]}>
+          <View
+            style={[
+              styles.search,
+              { backgroundColor: color.bgElevated, borderColor: color.border, borderRadius: radius.md, paddingHorizontal: space[3], paddingVertical: space[2], marginRight: space[2], marginBottom: space[2] },
+            ]}
+          >
+            <MaterialCommunityIcons name="magnify" color={color.textMuted} size={18} />
+            <TextInput
+              placeholder="Buscar por nombre o código"
+              placeholderTextColor={color.textMuted}
+              value={query}
+              onChangeText={setQuery}
+              style={{ flex: 1, color: color.text, marginLeft: space[2] }}
+            />
+          </View>
+          <Pressable
+            onPress={openCreate}
+            style={[styles.btn, { backgroundColor: color.accent, borderRadius: radius.md, paddingHorizontal: space[3], paddingVertical: space[2], marginBottom: space[2] }]}
+          >
+            <MaterialCommunityIcons name="plus" color={color.textInverse} size={18} />
+            <Text style={{ color: color.textInverse, fontWeight: font.weight.bold, marginLeft: space[2], fontSize: font.size.sm }}>Nuevo artículo</Text>
+          </Pressable>
+        </View>
+      </View>
+
+      {categories.length > 0 && (
+        <View style={{ width: '100%', maxWidth: MIN_TABLE_W, alignSelf: 'center', marginBottom: space[2] }}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={{ flexGrow: 0, flexShrink: 0 }}
+            contentContainerStyle={{ alignItems: 'center', paddingVertical: 2 }}
+          >
+            <Chip label="Todas" active={category === ''} onPress={() => setCategory('')} style={{ marginRight: space[2] }} />
+            {categories.map((c) => (
+              <Chip key={c.id} label={c.nombre} active={category === c.id} onPress={() => setCategory(c.id)} style={{ marginRight: space[2] }} />
+            ))}
+          </ScrollView>
+        </View>
+      )}
+
+      <View style={{ width: '100%', maxWidth: (isWeb || isWide) ? CONTENT_MAX_W : undefined, alignSelf: (isWeb || isWide) ? 'center' : 'stretch', flex: 1 }}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={{ width: '100%' }}
+          contentContainerStyle={{ paddingLeft: (isWeb || isWide) ? sidePad : 0, paddingRight: (isWeb || isWide) ? sidePad : 0 }}
+        >
+          <View style={{ minWidth: MIN_TABLE_W, flex: 1 }}>
+            <View style={[styles.row, styles.header, { backgroundColor: color.bgSubtle, borderColor: color.border, borderTopLeftRadius: radius.md, borderTopRightRadius: radius.md }]}>
+              <View style={[styles.cell, { flex: 3, alignItems: 'flex-start' }]}>
+                <Text style={[styles.headerText, { color: color.text, fontSize: font.size.xs }]}>Artículo</Text>
+              </View>
+              <View style={[styles.cell, { flex: 2 }]}>
+                <Text style={[styles.headerText, { color: color.text, fontSize: font.size.xs }]}>Código</Text>
+              </View>
+              <View style={[styles.cell, { flex: 2 }]}>
+                <Text style={[styles.headerText, { color: color.text, fontSize: font.size.xs }]}>Categoría</Text>
+              </View>
+              <View style={[styles.cell, { flex: 1 }]}>
+                <Text style={[styles.headerText, { color: color.text, fontSize: font.size.xs }]}>Stock</Text>
+              </View>
+              <View style={[styles.cell, { flex: 1 }]}>
+                <Text style={[styles.headerText, { color: color.text, fontSize: font.size.xs }]}>Precio</Text>
+              </View>
+              <View style={[styles.cell, { width: 88 }]} />
+            </View>
+
+            {loading ? (
+              <SkeletonRow count={4} />
+            ) : filtered.length === 0 ? (
+              <EmptyState icon="basket-off-outline" title="Sin artículos" subtitle="Registra tu primer artículo con “Nuevo artículo”." />
+            ) : (
+              <FlatList
+                data={filtered}
+                keyExtractor={(it) => it.id}
+                renderItem={({ item }) => (
+                  <View style={[styles.row, { borderColor: color.border }]}>
+                    <View style={[styles.cell, { flex: 3, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' }]}>
+                      <Image
+                        source={item.imagen ? { uri: item.imagen } : require('@/assets/images/icon.png')}
+                        style={[styles.thumb, { backgroundColor: color.border }]}
+                        contentFit="cover"
+                      />
+                      <View style={{ marginLeft: space[3], flexShrink: 1 }}>
+                        <Text numberOfLines={1} style={{ color: color.text, fontWeight: font.weight.semibold }}>{item.nombre}</Text>
+                        {item.descuento ? (
+                          <Text style={{ color: color.success, fontSize: font.size.xs }}>-{item.descuento}%</Text>
+                        ) : null}
+                      </View>
+                    </View>
+                    <View style={[styles.cell, { flex: 2 }]}>
+                      <Text numberOfLines={1} style={{ color: color.textMuted, fontFamily: isWeb ? 'monospace' : undefined }}>{item.codigoBarras ?? '—'}</Text>
+                    </View>
+                    <View style={[styles.cell, { flex: 2 }]}>
+                      <Text style={{ color: color.textMuted }}>{categoryName(item.categoriaId)}</Text>
+                    </View>
+                    <View style={[styles.cell, { flex: 1 }]}>
+                      <Text style={{ color: color.text }}>{item.stock ?? 0}</Text>
+                    </View>
+                    <View style={[styles.cell, { flex: 1 }]}>
+                      <Text style={{ color: color.text, fontWeight: font.weight.semibold }}>{money(item.precio)}</Text>
+                    </View>
+                    <View style={[styles.cell, { width: 88, flexDirection: 'row', justifyContent: 'flex-end', gap: 4 }]}>
+                      <Pressable onPress={() => openEdit(item)} style={styles.iconBtn} hitSlop={6}>
+                        <MaterialCommunityIcons name="pencil-outline" color={color.text} size={20} />
+                      </Pressable>
+                      <Pressable onPress={() => confirmDelete(item)} style={styles.iconBtn} hitSlop={6}>
+                        <MaterialCommunityIcons name="trash-can-outline" color={color.danger} size={20} />
+                      </Pressable>
+                    </View>
+                  </View>
+                )}
+                ItemSeparatorComponent={() => <View style={{ height: 1, backgroundColor: color.border }} />}
+                contentContainerStyle={{ borderWidth: 1, borderColor: color.border, borderRadius: radius.md, overflow: 'hidden' }}
+              />
+            )}
+          </View>
+        </ScrollView>
+      </View>
+
+      <ArticuloFormModal
+        visible={modalOpen}
+        initial={editing}
+        categorias={categories}
+        saving={saving}
+        onClose={() => {
+          setModalOpen(false);
+          setEditing(null);
+        }}
+        onSubmit={handleSubmit}
+        onCreateCategoria={handleCreateCategoria}
+      />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  toolbar: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' },
+  search: { flex: 1, minWidth: 220, flexDirection: 'row', alignItems: 'center', borderWidth: 1 },
+  btn: { flexDirection: 'row', alignItems: 'center' },
+  header: { borderWidth: 1 },
+  headerText: { fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.3 },
+  row: { flexDirection: 'row', alignItems: 'center' },
+  cell: { paddingHorizontal: 12, paddingVertical: 10, justifyContent: 'center' },
+  thumb: { width: 36, height: 36, borderRadius: 8 },
+  iconBtn: { padding: 6 },
+});

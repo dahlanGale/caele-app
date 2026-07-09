@@ -23,6 +23,22 @@ import { firestore } from '@/src/lib/firebase';
 
 export type WithId<T> = T & { id: string };
 
+/** Elimina recursivamente claves con valor `undefined` (Firestore las rechaza). */
+export function pruneUndefined<T>(value: T): T {
+  if (Array.isArray(value)) {
+    return value.map((v) => pruneUndefined(v)) as unknown as T;
+  }
+  if (value && typeof value === 'object' && !(value instanceof Date)) {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      if (v === undefined) continue;
+      out[k] = pruneUndefined(v);
+    }
+    return out as T;
+  }
+  return value;
+}
+
 export function withId<T extends object>(doc: DocumentData): WithId<T> {
   const { id, ...data } = doc;
   return { id: doc.id as string, ...data } as WithId<T>;
@@ -83,17 +99,17 @@ export class TypedCollection<T extends object> {
   }
 
   async create(pymeId: string, data: Omit<T, 'id'>): Promise<string> {
-    const docRef = await addDoc(this.ref(pymeId) as any, data as any);
+    const docRef = await addDoc(this.ref(pymeId) as any, pruneUndefined(data) as any);
     return docRef.id;
   }
 
   async set(pymeId: string, id: string, data: Partial<T>): Promise<void> {
     const ref = this.docRef(pymeId, id);
-    await setDoc(ref, data as any, { merge: true });
+    await setDoc(ref, pruneUndefined(data) as any, { merge: true });
   }
 
   async update(pymeId: string, id: string, data: Partial<T>): Promise<void> {
-    await updateDoc(this.docRef(pymeId, id), data as any);
+    await updateDoc(this.docRef(pymeId, id), pruneUndefined(data) as any);
   }
 
   async delete(pymeId: string, id: string): Promise<void> {
@@ -153,6 +169,54 @@ export const ordenesCollection = new TypedCollection<{
   impuestos: number;
   total: number;
   estado: string;
+  metodoPago?: string;
+  montoRecibido?: number;
+  cambio?: number;
+  terminalId?: string;
+  corteId?: string;
+  codigoVenta?: string;
   createdAt: Date;
   updatedAt: Date;
 }>(firestore, (pymeId) => `pymes/${pymeId}/ordenes`);
+
+export const articulosCollection = new TypedCollection<{
+  nombre: string;
+  descripcion?: string;
+  categoriaId?: string;
+  precio: number;
+  descuento?: number;
+  imagen?: string;
+  stock?: number;
+  codigoBarras?: string;
+  unidadVenta?: string;
+  activo?: boolean;
+  fechaRegistro?: Date;
+}>(firestore, (pymeId) => `pymes/${pymeId}/articulos`);
+
+export const terminalesCollection = new TypedCollection<{
+  nombreEquipo: string;
+  tipoMaquina: string;
+  device: Record<string, unknown>;
+  usuarioRegistro?: Record<string, unknown>;
+  activa: boolean;
+  fechaRegistro?: Date;
+  ultimaSesion?: Date;
+  logSesion?: Record<string, unknown>;
+}>(firestore, (pymeId) => `pymes/${pymeId}/terminales`);
+
+export const cortesCollection = new TypedCollection<{
+  usuarioId: string;
+  usuarioNombre?: string;
+  terminalId: string;
+  fechaInicio: Date;
+  fechaCierre?: Date;
+  efectivoInicial: number;
+  totales: Record<string, number>;
+  ventas: any[];
+  retiros: any[];
+  estatus: string;
+  efectivoEsperado?: number;
+  efectivoFinal?: number;
+  diferencia?: number;
+  observaciones?: string;
+}>(firestore, (pymeId) => `pymes/${pymeId}/cortes`);
