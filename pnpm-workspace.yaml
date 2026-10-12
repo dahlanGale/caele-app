@@ -1,0 +1,9 @@
+# Expo resuelve sus módulos nativos por ruta física, no por el almacén de enlaces de pnpm.
+# Sin esto, Metro no encuentra los módulos de `expo-*` ("Unable to resolve module").
+# (pnpm 11 ya no lee esta opción desde .npmrc.)
+nodeLinker: hoisted
+
+allowBuilds:
+  '@firebase/util': true
+  protobufjs: true
+  unrs-resolver: true
